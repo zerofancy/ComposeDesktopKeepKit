@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>v0.2.1 发布验证</title>
+<style>body{font:16px/1.7 system-ui;max-width:1000px;margin:40px auto;padding:24px;color:#182333}td,th{padding:12px;border-bottom:1px solid #ddd;text-align:left}code{overflow-wrap:anywhere}a{color:#1664c0}</style>
+<h1>v0.2.1 发布验证</h1>
+<p>2026-10-11 · Windows x64 · JitPack 发布与真实远端消费验证通过。</p>
+<table>
+<tr><th>项目</th><th>结果</th></tr>
+<tr><td>源码</td><td>main 提交 <code>912ccdcac6be71b6b77a6a7a5c70d07eeca92af6</code>；不可变标签 v0.2.1。</td></tr>
+<tr><td>新增支持</td><td>jna-jpms / jna-platform-jpms:5.16.0，分别复用现有 JNA / JNA Platform 规则；同时修复验证脚本的 Windows wrapper 与日志编码兼容。</td></tr>
+<tr><td>发布前验证</td><td>两个 JPMS 库共四项隔离 Release 正反例通过，禁用规则后均在运行阶段失败；完整 check 的 12 项测试、两个 Coil Release PNG/SVG 回归和 0.2.1 本地 Maven 产物生成通过。</td></tr>
+<tr><td>JitPack</td><td>API status=ok、isTag=true、private=false、jdk=17，源码提交匹配；构建日志确认 publishPluginMavenPublicationToMavenLocal 成功。</td></tr>
+<tr><td>产物</td><td>POM、module metadata、实现 JAR 和 sources JAR 可下载；实现 JAR 内 version=v0.2.1，包含 19 个依赖坐标。SHA-256：<code>c4dc2405c253235f88bb146c54665020bd495d7b6d35fdce873ef24bbd9e0265</code>。</td></tr>
+<tr><td>真实远端消费</td><td>samples/jitpack-consumer 仅使用 JitPack，无 includeBuild / mavenLocal；下载日志确认 POM、module、JAR 来自 JitPack。启用优化和混淆，Release PNG/SVG 获取与解码成功（2×2）。</td></tr>
+<tr><td>配置缓存</td><td>第二次 runRelease keepKitReport 输出 Reusing configuration cache，PNG/SVG 再次成功。</td></tr>
+<tr><td>远端 JPMS 验证</td><td>临时消费项目复用 JitPack 仓库配置，使用已发布 v0.2.1 插件，无 includeBuild / mavenLocal。分别只直接声明 jna-jpms 和 jna-platform-jpms，两个优化、混淆后的 Release 均运行成功，并输出精确匹配日志。</td></tr>
+</table>
+<p>消费验证使用 Gradle 8.14.3、Compose 1.9.3、ProGuard 7.7.0、Microsoft JDK 21.0.12。Coil 消费项目使用 Kotlin 2.2.0 / 目标 JDK 17，JPMS 场景使用 Kotlin 2.4.21 / 目标 JDK 21。此次未验证 Linux/macOS、GUI、原生安装包或 module-path 启动，也不据此声明远端 CI 已通过。</p>
+<p>本地消费日志：build/jitpack-v021-consumer-first.log、build/jitpack-v021-consumer-second.log、build/jitpack-v021-jna.log、build/jitpack-v021-jna-platform.log。</p>
+<p><a href="jna-jpms-validation.html">JPMS 隔离验证记录</a> · <a href="https://jitpack.io/com/github/zerofancy/ComposeDesktopKeepKit/v0.2.1/build.log">JitPack 构建日志</a> · <a href="https://github.com/zerofancy/ComposeDesktopKeepKit/tree/v0.2.1">发布标签</a></p>
+</html>
