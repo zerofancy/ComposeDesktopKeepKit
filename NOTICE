@@ -30,6 +30,16 @@ runtime reflection/JNI contracts. Upstream source references are recorded
 per dependency in src/main/resources/keepkit/catalog.json.
 These libraries are fixture dependencies, not plugin runtime dependencies.
 
+Coroutines rules are adapted from kotlinx-coroutines-core-jvm 1.11.0 packaged
+META-INF/proguard/coroutines.pro (Apache-2.0, JetBrains and contributors), with
+original Desktop SPI and narrowly scoped ProGuard 7.7.0 optimization protection.
+https://github.com/Kotlin/kotlinx.coroutines/tree/1.11.0
+
+jsoup rules include its packaged optional RE2/J warning rule (MIT, Jonathan
+Hedley and contributors), with original rules for compile-only JSpecify
+annotations and Java 11 reflection/enum contracts.
+https://github.com/jhy/jsoup/tree/jsoup-1.22.2
+
 Runtime dependencies:
 Apache Maven Artifact 3.9.9: Apache-2.0
 Google Gson 2.11.0: Apache-2.0

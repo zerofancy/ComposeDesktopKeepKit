@@ -35,7 +35,7 @@ pluginManagement {
 ```kotlin
 plugins {
     id("org.jetbrains.compose") // 沿用项目原有版本
-    id("io.github.zerofancy.compose-desktop-keep-kit") version "v0.2.2"
+    id("io.github.zerofancy.compose-desktop-keep-kit") version "v0.2.3"
 }
 ```
 
@@ -85,6 +85,11 @@ keepKit {
 | `com.github.hypfvieh:dbus-java-transport-native-unixsocket` | 5.2.0 | Transport provider SPI |
 | `org.xerial:sqlite-jdbc` | 3.53.4.0 | JDBC SPI、JNI 固定成员及配置枚举反射入口 |
 | `com.llamatik:library-jvm` | 1.10.1 | Bridge native 方法名称与 GenStream 回调 |
+| `org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm` | 1.11.0 | Dispatcher / ExceptionHandler SPI、原子更新字段、共享 Flow 的 GC 引用与局部优化保护 |
+| `org.jetbrains.kotlinx:kotlinx-coroutines-swing` | 1.11.0 | Swing Main dispatcher SPI 构造入口 |
+| `org.jsoup:jsoup` | 1.22.2 | 可选 RE2/J / JSpecify 引用、Java 11 HTTP 反射构造入口及请求方法枚举 |
+
+`v0.2.3` 新增以上 Coroutines / jsoup 支持。依赖审计和独立收缩正反例见 [KZAgent 依赖验证](docs/kzagent-dependencies-validation.html)。Coil 3.5.0 和 Okio 3.17.0 已能回退到现有规则；序列化应以最终解析版本为准。Compose Fluent / Haze 与特定 Compose 版本之间的二进制兼容警告，不作为通用 keep 规则自动屏蔽。
 
 FileKit、SQLDelight 和 Retrofit serialization converter 通过最终解析到的上述传递依赖获得保护，不为外层库重复添加全包 keep。JNA Platform 仅额外保护未继承 Library 的 LibCAPI 原生函数名称。应用提供的 JNA / D-Bus 接口、Logback 标准扩展组件同样按框架角色匹配，不要求填写业务包名。JNA 原生接口及其父接口应继承 Library；其他普通父接口中的原生方法需要应用自行保留名称。
 
@@ -119,6 +124,7 @@ FileKit、SQLDelight 和 Retrofit serialization converter 通过最终解析到�
 ./gradlew -p samples/integrations runRelease
 # 逐依赖单独引入的正例和禁用规则反例（预期失败由脚本判定）：
 python3 samples/integrations/verify.py
+python3 samples/kzagent-dependencies/verify.py
 ./gradlew publishAllPublicationsToLocalBuildRepository
 # 从 JitPack 下载已发布插件，不使用 includeBuild 或 mavenLocal：
 ./gradlew -p samples/jitpack-consumer runRelease

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><title>KZAgent 依赖规则验证</title>
+<style>body{max-width:960px;margin:40px auto;padding:0 24px;font:16px/1.7 system-ui}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:8px;text-align:left}code{background:#eee;padding:2px 4px}</style>
+<h1>KZAgent 依赖审计与新增规则</h1>
+<p>2026-10-11。审计依据为消费项目的 runtimeClasspath 最终解析结果，而不是版本目录中的请求版本。修改仅在 KeepKit 源码；没有替换消费项目配置，也没有发布新版本。</p>
+<table><tr><th>依赖</th><th>结论</th></tr>
+<tr><td>Coroutines core-jvm / swing 1.11.0</td><td>新增独立坐标支持：SPI 接口及 provider 名称、构造入口，volatile 原子字段、SafeContinuation 字段、ReadonlySharedFlow / ReadonlyStateFlow 的 Job GC 引用。</td></tr>
+<tr><td>jsoup 1.22.2</td><td>新增可选 RE2/J 和 compile-only JSpecify 警告规则；保留 Java 11 多版本 JAR 中反射创建的 HttpClientExecutor / RequestAuthHandler 构造入口，以及 Connection.Method 的枚举名称和 values/valueOf。</td></tr>
+<tr><td>Coil 3.5.0 / Okio 3.17.0</td><td>现有 3.3.0 / 3.15.0 条目已匹配，目录测试验证回退；本次没有为这两个新版本添加未经运行验证的精确版本条目。</td></tr>
+<tr><td>Serialization</td><td>请求 1.9.0，最终被传递依赖提升到 1.11.0；已有精确匹配。</td></tr>
+<tr><td>OkHttp 4.12.0 / JNA 5.19.1 / D-Bus 5.2.0</td><td>已有支持。FileKit 0.14.2 通过 JNA、D-Bus 传递依赖获得保护，无需全包 keep。</td></tr>
+<tr><td>Markdown / Compose Fluent / Haze</td><td>未发现需要额外反射入口保护的证据，不添加全包规则。Fluent v0.1.0 和 Haze 1.6.6 的已有 dontwarn 涉及旧 Compose API 的二进制兼容，不能证明相应代码路径可运行，故不自动推广到所有消费者。</td></tr></table>
+<h2>固定验证环境</h2>
+<p>Windows x64，Gradle 8.14.3，Kotlin 2.4.0，JVM 目标 17，执行 JDK 21.0.12，ProGuard 7.7.0。独立 fixture 不使用 Compose 默认规则，每个场景只直接引入一个待测依赖，其他依赖由正常传递解析获得。</p>
+<p>执行 <code>python samples/kzagent-dependencies/verify.py</code>。日志和结果 JSON 位于样例的 <code>build/verification</code>，不纳入版本控制。负例保留必要的可选依赖警告抑制，以确保 keep 缺失能到运行阶段；jsoup 另有完全移除规则的构建阶段警告负例。</p>
+<table><tr><th>场景</th><th>正例</th><th>负例</th></tr>
+<tr><td>Coroutines core</td><td>服务发现、async/delay、stateIn/shareIn 及 Job 引用字段断言通过</td><td>移除 keep 后服务发现为空，verifySmoke 运行失败</td></tr>
+<tr><td>Coroutines Swing</td><td>Main / Main.immediate 在 Swing EDT 上执行并完成挂起恢复</td><td>移除规则后主线程 dispatcher 运行失败</td></tr>
+<tr><td>jsoup</td><td>无 RE2/J 的正则选择器、Java 11 反射构造入口、真实本地 HTTP 请求通过</td><td>完全移除规则时 RE2/J 未解析警告阻止收缩；仅保留 dontwarn 时 RequestAuthHandler 名称丢失，运行失败</td></tr></table>
+<h2>局部优化保护</h2>
+<p>优化和混淆开启时，ProGuard 7.7.0 将 Job.invokeOnCompletion 的 Function1 参数错误特化为内部适配类，产生 VerifyError；FlowKt 多文件实现也复现错误的返回类型特化。规则仅固定该接口方法的优化契约和 FlowKt__* 的优化，允许 shrinking 和 obfuscation。没有全局关闭优化或保留整个 Coroutines 包。</p>
+<p>jsoup 反射构造入口不能允许优化：实测 allowoptimization 将 HttpClientExecutor 的 public 构造函数改为 private，导致上游 getConstructor 无法找到。请求方法枚举也需保留 values、valueOf 和常量，否则 HTTP 请求出现“not an enum class”。</p>
+<h2>边界</h2>
+<p>这些测试验证独立 JAR 的收缩、优化、混淆和运行，不代表已验证 KZAgent 的完整 GUI、原生打包、其他操作系统或全部依赖组合。jsoup fixture 将 Java 11 多版本条目展开为普通类，确保测试其反射实现；消费项目的多版本 JAR 处理由 Compose / ProGuard 输入管线负责。Core 的角色匹配也能保护 Swing provider，Swing 条目提供独立明确的构造入口规则。</p>
+<p>规则来源：<a href="https://github.com/Kotlin/kotlinx.coroutines/tree/1.11.0">Coroutines 1.11.0</a>、<a href="https://github.com/jhy/jsoup/tree/jsoup-1.22.2">jsoup 1.22.2</a>。原始 consumer 规则直接对照固定版本发布 JAR 内文件。</p>
+</html>

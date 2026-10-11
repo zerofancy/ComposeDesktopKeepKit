@@ -4,6 +4,41 @@ import org.junit.jupiter.api.Test
 import kotlin.test.*
 
 class RuleCatalogTest {
+    @Test fun `KZAgent missing adapters use resolved coordinates and scoped rules`() {
+        val modules = listOf(
+            "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.11.0",
+            "org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.11.0",
+            "org.jsoup:jsoup:1.22.2"
+        )
+        val catalog = RuleCatalog.load()
+        val result = catalog.generate(modules, emptySet())
+        assertEquals(3, result.report.applications.size)
+        assertTrue(result.report.applications.all { it.selection == "exact" })
+        assertContains(result.rules, "implements kotlinx.coroutines.internal.MainDispatcherFactory")
+        assertContains(result.rules, "implements kotlinx.coroutines.CoroutineExceptionHandler")
+        assertContains(result.rules, "class kotlinx.coroutines.swing.SwingDispatcherFactory")
+        assertContains(result.rules, "volatile <fields>;")
+        assertContains(result.rules, "class kotlinx.coroutines.flow.ReadonlyStateFlow")
+        assertContains(result.rules, "class kotlinx.coroutines.flow.ReadonlySharedFlow")
+        assertContains(result.rules, "-dontwarn com.google.re2j.**")
+        assertContains(result.rules, "class org.jsoup.helper.HttpClientExecutor")
+        assertContains(result.rules, "class org.jsoup.helper.RequestAuthHandler")
+        assertContains(result.rules, "enum org.jsoup.Connection\$Method")
+        assertContains(result.rules, "class kotlinx.coroutines.flow.FlowKt__*")
+        assertContains(result.rules, "invokeOnCompletion(boolean, boolean, kotlin.jvm.functions.Function1)")
+        assertFalse(result.rules.contains("-keep class org.jsoup.**"))
+        assertEquals("", catalog.generate(modules, modules.map { it.substringBeforeLast(':') }.toSet()).rules)
+        // Existing adapters already match the versions actually selected in KZAgent.
+        val existing = catalog.generate(listOf(
+            "io.coil-kt.coil3:coil-core-jvm:3.5.0",
+            "io.coil-kt.coil3:coil-network-okhttp-jvm:3.5.0",
+            "io.coil-kt.coil3:coil-svg-jvm:3.5.0",
+            "com.squareup.okio:okio-jvm:3.17.0",
+            "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.11.0"
+        ), emptySet())
+        assertEquals(5, existing.report.applications.size)
+        assertEquals(4, existing.report.applications.count { it.selection == "lower" })
+    }
     private fun catalog(versions: List<String> = listOf("3.1.0", "3.3.0", "3.5.0")) = RuleCatalog(
         CatalogDocument(1, listOf(DependencyRules("example:library", versions.map { RuleVersion(it, listOf("test.pro"), "https://example.org") })))
     ) { "-keep class example.Service { *; }\r\n" }

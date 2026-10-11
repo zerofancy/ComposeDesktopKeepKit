@@ -237,6 +237,42 @@
           "source": "https://github.com/java-native-access/jna/blob/5.19.1/contrib/platform/src/com/sun/jna/platform/unix/LibCAPI.java"
         }
       ]
+    },
+    {
+      "dependency": "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm",
+      "versions": [
+        {
+          "version": "1.11.0",
+          "rules": [
+            "coroutines.pro"
+          ],
+          "source": "https://github.com/Kotlin/kotlinx.coroutines/blob/1.11.0/kotlinx-coroutines-core/jvm/resources/META-INF/proguard/coroutines.pro"
+        }
+      ]
+    },
+    {
+      "dependency": "org.jetbrains.kotlinx:kotlinx-coroutines-swing",
+      "versions": [
+        {
+          "version": "1.11.0",
+          "rules": [
+            "coroutines-swing.pro"
+          ],
+          "source": "https://github.com/Kotlin/kotlinx.coroutines/tree/1.11.0/ui/kotlinx-coroutines-swing"
+        }
+      ]
+    },
+    {
+      "dependency": "org.jsoup:jsoup",
+      "versions": [
+        {
+          "version": "1.22.2",
+          "rules": [
+            "jsoup.pro"
+          ],
+          "source": "https://github.com/jhy/jsoup/blob/jsoup-1.22.2/src/main/resources/META-INF/proguard/org.jsoup_jsoup.pro"
+        }
+      ]
     }
   ]
 }
