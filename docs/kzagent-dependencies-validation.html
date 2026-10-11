@@ -2,7 +2,7 @@
 <html lang="zh-CN"><meta charset="utf-8"><title>KZAgent 依赖规则验证</title>
 <style>body{max-width:960px;margin:40px auto;padding:0 24px;font:16px/1.7 system-ui}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:8px;text-align:left}code{background:#eee;padding:2px 4px}</style>
 <h1>KZAgent 依赖审计与新增规则</h1>
-<p>2026-10-11。审计依据为消费项目的 runtimeClasspath 最终解析结果，而不是版本目录中的请求版本。修改仅在 KeepKit 源码；没有替换消费项目配置，也没有发布新版本。</p>
+<p>2026-10-11。审计依据为消费项目的 runtimeClasspath 最终解析结果，而不是版本目录中的请求版本。修改仅在 KeepKit 源码，没有替换消费项目配置。新增支持已于 2026-10-12 随 v0.2.3 发布，见<a href="jitpack-v023-validation.html">发布验证记录</a>。</p>
 <table><tr><th>依赖</th><th>结论</th></tr>
 <tr><td>Coroutines core-jvm / swing 1.11.0</td><td>新增独立坐标支持：SPI 接口及 provider 名称、构造入口，volatile 原子字段、SafeContinuation 字段、ReadonlySharedFlow / ReadonlyStateFlow 的 Job GC 引用。</td></tr>
 <tr><td>jsoup 1.22.2</td><td>新增可选 RE2/J 和 compile-only JSpecify 警告规则；保留 Java 11 多版本 JAR 中反射创建的 HttpClientExecutor / RequestAuthHandler 构造入口，以及 Connection.Method 的枚举名称和 values/valueOf。</td></tr>

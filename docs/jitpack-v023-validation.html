@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>v0.2.3 发布验证</title>
+<style>body{font:16px/1.7 system-ui;max-width:1000px;margin:40px auto;padding:24px;color:#182333}td,th{padding:12px;border-bottom:1px solid #ddd;text-align:left}code{overflow-wrap:anywhere}a{color:#1664c0}</style>
+<h1>v0.2.3 发布验证</h1>
+<p>2026-10-12 · Windows x64 · JitPack 发布与真实远端消费验证通过。</p>
+<table>
+<tr><th>项目</th><th>结果</th></tr>
+<tr><td>源码</td><td>main 提交 <code>630f59bdbc311319616edac30319cad2c2cf5a17</code>；不可变标签 v0.2.3。发布后验证文档另行提交，不移动标签。</td></tr>
+<tr><td>新增支持</td><td>Coroutines core-jvm / swing 1.11.0：SPI、原子更新字段、共享 Flow 的 GC 引用、局部优化契约保护。jsoup 1.22.2：可选 RE2/J / JSpecify 警告、Java 11 HTTP 反射构造入口、请求方法枚举。</td></tr>
+<tr><td>发布前验证</td><td>clean check 的 14 项测试、本地 Maven 发布、7 项独立收缩正反例、两个 Coil Release PNG/SVG 回归均通过。两个 includeBuild 构建曾争用插件资源目录，清理重建和顺序重跑后通过，失败不计为验证成功。</td></tr>
+<tr><td>JitPack</td><td>API status=ok、isTag=true、private=false、jdk=17，commit 与发布标签匹配。JitPack 构建退出码为 0。</td></tr>
+<tr><td>产物</td><td>POM、实现 JAR、sources JAR 可下载。POM 坐标为 com.github.zerofancy:ComposeDesktopKeepKit:v0.2.3；实现 JAR 内 version=v0.2.3、插件描述符、三个新增坐标及规则文件均正确。发布规则与源码比较忽略平台换行差异后相同。</td></tr>
+<tr><td>SHA-256</td><td>实现 JAR：<code>f0affa3b80917fd07d16a1a910bcd23256feffacb02f5a09b287e3493d5c355b</code>。Gradle 从 JitPack 下载的缓存 JAR 与直接下载产物一致。</td></tr>
+<tr><td>发布规则独立验证</td><td>从远端实现 JAR 提取规则到隔离 fixture 工作区，每个场景仅直接引入一个待测依赖，不使用 Compose 默认规则。Coroutines core、Swing 和 jsoup 的 3 项正例、4 项预期失败反例全部通过判定；包含正则选择器、本地 HTTP 请求和反射入口验证。</td></tr>
+<tr><td>远端 Coil 消费</td><td>samples/jitpack-consumer 使用 JitPack v0.2.3，无 includeBuild / mavenLocal。优化和混淆开启，HTTP PNG/SVG 获取与解码成功（2×2）。第二次 runRelease keepKitReport 显示 Configuration cache entry reused，运行再次成功。</td></tr>
+</table>
+<p>Gradle 8.14.3、ProGuard 7.7.0、Microsoft JDK 21.0.12。新增依赖 fixture 使用 Kotlin 2.4.0 / JVM 目标 17；Coil 样例及远端消费项目使用 Kotlin 2.2.0、Compose 1.9.3 / JVM 目标 17。此次验证不包括 KZAgent 完整 GUI、原生安装包、Linux/macOS 或 Fluent/Haze 与新版 Compose 的二进制兼容。</p>
+<p>发布规则 fixture 与结果位于 <code>build/jitpack-v023-rules</code>；直接下载的 POM、JAR、sources JAR、状态及校验结果位于 <code>build/jitpack-v023</code>。生成产物不纳入版本控制。</p>
+<p><a href="kzagent-dependencies-validation.html">依赖审计与规则验证</a> · <a href="https://jitpack.io/com/github/zerofancy/ComposeDesktopKeepKit/v0.2.3/build.log">JitPack 构建日志</a> · <a href="https://github.com/zerofancy/ComposeDesktopKeepKit/tree/v0.2.3">发布标签</a></p>
+</html>
