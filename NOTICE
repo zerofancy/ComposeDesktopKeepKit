@@ -15,6 +15,21 @@ Okio multifile facade optimization workaround was reproduced in the Release
 sample, with the related ProGuard issue as background:
 https://github.com/Guardsquare/proguard/issues/533
 
+Retrofit 3 rules are adapted from its packaged retrofit2.pro (Apache-2.0):
+https://github.com/square/retrofit/blob/3.0.0/retrofit/src/main/resources/META-INF/proguard/retrofit2.pro
+Copyright Square / Block, Inc.
+
+Kotlinx serialization rules are adapted from its packaged common rules
+(Apache-2.0), with a tested ProGuard enclosing-class companion match:
+https://github.com/Kotlin/kotlinx.serialization/tree/v1.11.0/core
+Copyright JetBrains s.r.o. and contributors.
+
+The additional SLF4J, Logback, JNA, D-Bus Java, SQLite JDBC and Llamatik
+fragments are original rules based on their versioned source artifacts and
+runtime reflection/JNI contracts. Upstream source references are recorded
+per dependency in src/main/resources/keepkit/catalog.json.
+These libraries are fixture dependencies, not plugin runtime dependencies.
+
 Runtime dependencies:
 Apache Maven Artifact 3.9.9: Apache-2.0
 Google Gson 2.11.0: Apache-2.0

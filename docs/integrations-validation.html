@@ -1,0 +1,52 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>依赖隔离与最小保护验证</title><style>body{font:16px/1.7 system-ui,sans-serif;background:#f6f8fb;color:#182333;margin:0}main{max-width:1180px;margin:40px auto;padding:32px;background:white;border-radius:16px}h1{font-size:30px}h2{margin-top:32px;font-size:21px}code,pre{font:13px/1.6 ui-monospace,monospace}pre{white-space:pre-wrap;overflow-wrap:anywhere}table{border-collapse:collapse;min-width:1000px;width:100%}td,th{border-bottom:1px solid #dde4ed;text-align:left;padding:12px;vertical-align:top}th{background:#eef3fa}.scroll{overflow:auto}a{color:#1664c0}.summary{padding:16px;background:#eaf4ef;border-radius:10px}li{margin:8px 0}</style><main><h1>依赖隔离与最小保护验证</h1><p>2026-10-11 · v0.2.0 源码验证记录。</p><p class="summary">结果：30 / 30 项通过，其中 13 项验证禁用保护后的运行失败。另有插件 check 和两个 Coil Release 回归样例。</p><h2>验证方式</h2><p>每个隔离场景只直接声明一个待测依赖，另有 Compose Desktop 基线；其余库仅通过 Gradle 正常传递解析获得。开启 ProGuard 优化和混淆。禁用反例只补可选引用警告抑制，必须运行失败才算通过，构建失败不算有效反例。</p><p>Gradle 8.14.3 · Kotlin 2.4.21 · Compose 1.9.3 · ProGuard 7.7.0 · JDK 21 · Linux x86_64。插件自身仍使用 Kotlin 2.2.0 / JDK 17。</p><div class="scroll"><table><thead><tr><th>场景</th><th>唯一直接待测依赖</th><th>正例</th><th>禁用反例</th><th>实际传递匹配</th></tr></thead><tbody><tr><td>retrofit</td><td><code>com.squareup.retrofit2:retrofit:3.0.0</code></td><td>通过</td><td>运行失败（预期）</td><td><details><summary>匹配记录</summary><pre>com.squareup.okhttp3:okhttp:4.12.0 添加了 keep 规则（规则版本：4.12.0，精确匹配）
+com.squareup.okio:okio-jvm:3.6.0 添加了 keep 规则（规则版本：3.15.0，向上选择）
+com.squareup.retrofit2:retrofit:3.0.0 添加了 keep 规则（规则版本：3.0.0，精确匹配）
+org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.7.3 添加了 keep 规则（规则版本：1.11.0，向上选择）</pre></details></td></tr>
+<tr><td>okhttp</td><td><code>com.squareup.okhttp3:okhttp:5.5.0</code></td><td>通过</td><td>运行失败（预期）</td><td><details><summary>匹配记录</summary><pre>com.squareup.okhttp3:okhttp-jvm:5.5.0 添加了 keep 规则（规则版本：5.5.0，精确匹配）
+com.squareup.okhttp3:okhttp:5.5.0 添加了 keep 规则（规则版本：5.5.0，精确匹配）
+com.squareup.okio:okio-jvm:3.18.1 添加了 keep 规则（规则版本：3.15.0，向下选择）
+org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.7.3 添加了 keep 规则（规则版本：1.11.0，向上选择）</pre></details></td></tr>
+<tr><td>serialization</td><td><code>org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.11.0</code></td><td>通过</td><td>运行失败（预期）</td><td><details><summary>匹配记录</summary><pre>独立 ProGuard 使用 core 规则；不引入其他适配器</pre></details></td></tr>
+<tr><td>serialization-core</td><td><code>org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.11.0</code></td><td>通过</td><td>运行失败（预期）</td><td><details><summary>匹配记录</summary><pre>独立 ProGuard 使用 core 规则；不引入其他适配器</pre></details></td></tr>
+<tr><td>slf4j</td><td><code>org.slf4j:slf4j-api:2.0.20</code></td><td>通过</td><td>运行失败（预期）</td><td><details><summary>匹配记录</summary><pre>org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.7.3 添加了 keep 规则（规则版本：1.11.0，向上选择）
+org.slf4j:slf4j-api:2.0.20 添加了 keep 规则（规则版本：2.0.20，精确匹配）</pre></details></td></tr>
+<tr><td>logback-core</td><td><code>ch.qos.logback:logback-core:1.6.5</code></td><td>通过</td><td>运行失败（预期）</td><td><details><summary>匹配记录</summary><pre>ch.qos.logback:logback-core:1.6.5 添加了 keep 规则（规则版本：1.6.5，精确匹配）
+org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.7.3 添加了 keep 规则（规则版本：1.11.0，向上选择）</pre></details></td></tr>
+<tr><td>logback-classic</td><td><code>ch.qos.logback:logback-classic:1.6.5</code></td><td>通过</td><td>运行失败（预期）</td><td><details><summary>匹配记录</summary><pre>ch.qos.logback:logback-classic:1.6.5 添加了 keep 规则（规则版本：1.6.5，精确匹配）
+ch.qos.logback:logback-core:1.6.5 添加了 keep 规则（规则版本：1.6.5，精确匹配）
+org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.7.3 添加了 keep 规则（规则版本：1.11.0，向上选择）
+org.slf4j:slf4j-api:2.0.19 添加了 keep 规则（规则版本：2.0.20，向上选择）</pre></details></td></tr>
+<tr><td>jna</td><td><code>net.java.dev.jna:jna:5.19.1</code></td><td>通过</td><td>运行失败（预期）</td><td><details><summary>匹配记录</summary><pre>net.java.dev.jna:jna:5.19.1 添加了 keep 规则（规则版本：5.19.1，精确匹配）
+org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.7.3 添加了 keep 规则（规则版本：1.11.0，向上选择）</pre></details></td></tr>
+<tr><td>jna-platform</td><td><code>net.java.dev.jna:jna-platform:5.19.1</code></td><td>通过</td><td>运行失败（预期）</td><td><details><summary>匹配记录</summary><pre>net.java.dev.jna:jna-platform:5.19.1 添加了 keep 规则（规则版本：5.19.1，精确匹配）
+net.java.dev.jna:jna:5.19.1 添加了 keep 规则（规则版本：5.19.1，精确匹配）
+org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.7.3 添加了 keep 规则（规则版本：1.11.0，向上选择）</pre></details></td></tr>
+<tr><td>dbus-core</td><td><code>com.github.hypfvieh:dbus-java-core:5.2.0</code></td><td>通过</td><td>运行失败（预期）</td><td><details><summary>匹配记录</summary><pre>com.github.hypfvieh:dbus-java-core:5.2.0 添加了 keep 规则（规则版本：5.2.0，精确匹配）
+org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.7.3 添加了 keep 规则（规则版本：1.11.0，向上选择）
+org.slf4j:slf4j-api:2.0.17 添加了 keep 规则（规则版本：2.0.20，向上选择）</pre></details></td></tr>
+<tr><td>dbus-transport</td><td><code>com.github.hypfvieh:dbus-java-transport-native-unixsocket:5.2.0</code></td><td>通过</td><td>运行失败（预期）</td><td><details><summary>匹配记录</summary><pre>com.github.hypfvieh:dbus-java-core:5.2.0 添加了 keep 规则（规则版本：5.2.0，精确匹配）
+com.github.hypfvieh:dbus-java-transport-native-unixsocket:5.2.0 添加了 keep 规则（规则版本：5.2.0，精确匹配）
+org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.7.3 添加了 keep 规则（规则版本：1.11.0，向上选择）
+org.slf4j:slf4j-api:2.0.17 添加了 keep 规则（规则版本：2.0.20，向上选择）</pre></details></td></tr>
+<tr><td>sqlite</td><td><code>org.xerial:sqlite-jdbc:3.53.4.0</code></td><td>通过</td><td>运行失败（预期）</td><td><details><summary>匹配记录</summary><pre>org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.7.3 添加了 keep 规则（规则版本：1.11.0，向上选择）
+org.xerial:sqlite-jdbc:3.53.4.0 添加了 keep 规则（规则版本：3.53.4.0，精确匹配）</pre></details></td></tr>
+<tr><td>llamatik</td><td><code>com.llamatik:library-jvm:1.10.1</code></td><td>通过</td><td>运行失败（预期）</td><td><details><summary>匹配记录</summary><pre>com.llamatik:library-jvm:1.10.1 添加了 keep 规则（规则版本：1.10.1，精确匹配）
+org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.7.3 添加了 keep 规则（规则版本：1.11.0，向上选择）</pre></details></td></tr>
+<tr><td>filekit</td><td><code>io.github.vinceglb:filekit-dialogs:0.16.0</code></td><td>通过</td><td>额外传递依赖正例</td><td><details><summary>匹配记录</summary><pre>com.github.hypfvieh:dbus-java-core:5.2.0 添加了 keep 规则（规则版本：5.2.0，精确匹配）
+com.github.hypfvieh:dbus-java-transport-native-unixsocket:5.2.0 添加了 keep 规则（规则版本：5.2.0，精确匹配）
+net.java.dev.jna:jna-platform:5.19.1 添加了 keep 规则（规则版本：5.19.1，精确匹配）
+net.java.dev.jna:jna:5.19.1 添加了 keep 规则（规则版本：5.19.1，精确匹配）
+org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.11.0 添加了 keep 规则（规则版本：1.11.0，精确匹配）
+org.slf4j:slf4j-api:2.0.17 添加了 keep 规则（规则版本：2.0.20，向上选择）</pre></details></td></tr>
+<tr><td>sqldelight</td><td><code>app.cash.sqldelight:sqlite-driver:2.4.1</code></td><td>通过</td><td>额外传递依赖正例</td><td><details><summary>匹配记录</summary><pre>org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.7.3 添加了 keep 规则（规则版本：1.11.0，向上选择）
+org.xerial:sqlite-jdbc:3.53.4.0 添加了 keep 规则（规则版本：3.53.4.0，精确匹配）</pre></details></td></tr>
+<tr><td>retrofit-converter</td><td><code>com.squareup.retrofit2:converter-kotlinx-serialization:3.0.0</code></td><td>通过</td><td>额外传递依赖正例</td><td><details><summary>匹配记录</summary><pre>com.squareup.okhttp3:okhttp:4.12.0 添加了 keep 规则（规则版本：4.12.0，精确匹配）
+com.squareup.okio:okio-jvm:3.6.0 添加了 keep 规则（规则版本：3.15.0，向上选择）
+com.squareup.retrofit2:retrofit:3.0.0 添加了 keep 规则（规则版本：3.0.0，精确匹配）
+org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.8.1 添加了 keep 规则（规则版本：1.11.0，向上选择）</pre></details></td></tr></tbody></table></div><h2>保护范围</h2><ul><li>Retrofit：服务方法注解、泛型签名及代理接口；不保留业务包。</li><li>Serialization：Companion / object 的 serializer 入口及 descriptor 优化契约。模型字段、模型类名、整个 serializer 类不做全量保护。named companion 字段、descriptor 字段仍允许混淆。</li><li>SLF4J / Logback：SPI 名称和构造入口；XML 标准扩展角色、ContextAware JavaBean 属性及 ProcessingPhase 枚举反射入口。</li><li>JNA：JNI 固定名称、少量固定字段和回调；Library 接口方法、Structure 字段与构造入口、Callback 入口、嵌套结构体 OPTIONS 的 enclosing 属性。JNA Platform 另补 LibCAPI 原生函数名称。</li><li>D-Bus：总线接口名称和方法、泛型与注解、结构字段、信号 / 异常构造入口及 native-unixsocket SPI。</li><li>SQLite：JDBC SPI、NativeDB.c 指定的 JNI 类和成员、四个配置枚举的 values() 入口；SLF4J 缺失时使用 JDK 日志。</li><li>Llamatik：Bridge native 名称、GenStream 固定回调名称。其他普通方法、LlamaSession 等不做全包 keep。</li><li>OkHttp 5：后缀数据库资源名称、可选平台 / TLS / GraalVM 引用；根组件与 JVM 坐标共享规则并去重。</li></ul><h2>单独引入揭示的问题</h2><p>综合依赖曾相互提供 Signature、Android、GraalVM 等保护。隔离测试分别发现并补齐 Retrofit 的 Android 可选引用、OkHttp 5 的 GraalVM 可选引用、SQLite 的可选 SLF4J 引用，以及 JNA Platform 的 LibCAPI 继承方法名称。</p><p>Compose 1.9.3 默认包含较宽的 serialization keep，直接禁用插件规则不足以构成反例。因此 core 与 JSON 分别使用独立 ProGuard fixture，仅注入 serialization.pro，验证默认 Companion、named companion、object 和真实 JSON 解码。</p><h2>运行边界</h2><p>只记录本机 Linux 验证，不声明 Windows / macOS 已通过。JNA 测试真实 libc、结构体、回调及继承接口；D-Bus 测试接口反射和 transport provider 发现，不连接外部会话总线。FileKit 验证真实 JNA 初始化、D-Bus SPI 和 portal 接口，不弹出文件选择窗口。Llamatik 加载真实原生库并调用 shutdown，另验证回调名称；不下载模型，不声明生成、语音、图像或流式推理已经验证。</p><p>Logback core 单独验证扩展类反射构造与 JavaBean 属性，classic 验证 XML encoder/appender 和自定义 Configurator SPI。XML 中任意其他类型仍需用户规则。JNA 的用户原生接口与父接口应继承 Library；其他普通父接口的原生方法需自行保留名称。</p><p>Retrofit converter 本身只传递引入 serialization core，不包含 JSON。隔离样例提供基于 core 的 StringFormat，验证真实请求和响应转换；没有额外引入 JSON。SQLDelight 使用真实 JdbcSqliteDriver 执行内存查询。</p><h2>重现</h2><pre>python3 samples/integrations/verify.py
+./gradlew -p samples/integrations runRelease -Pisolated=jna
+./gradlew -p samples/integrations runRelease -Pisolated=jna -PexcludeRules=net.java.dev.jna:jna
+./gradlew -p samples/integrations verifySerializationSmoke -Pisolated=serialization-core
+./gradlew check
+./gradlew -p samples/coil-desktop runRelease
+./gradlew -p samples/coil-kmp runRelease</pre><p>完整日志与结果 JSON 位于 samples/integrations/build/verification。<a href="../src/main/resources/keepkit/catalog.json">规则目录及固定上游来源</a> · <a href="../CONTRIBUTING.md">贡献要求</a></p></main></html>

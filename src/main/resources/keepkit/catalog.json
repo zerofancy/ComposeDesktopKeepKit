@@ -46,6 +46,13 @@
             "okhttp4.pro"
           ],
           "source": "https://github.com/square/okhttp/blob/parent-4.12.0/okhttp/src/main/resources/META-INF/proguard/okhttp3.pro"
+        },
+        {
+          "version": "5.5.0",
+          "rules": [
+            "okhttp5.pro"
+          ],
+          "source": "https://github.com/square/okhttp/tree/parent-5.5.0"
         }
       ]
     },
@@ -58,6 +65,150 @@
             "okio3.pro"
           ],
           "source": "https://github.com/Guardsquare/proguard/issues/533"
+        }
+      ]
+    },
+    {
+      "dependency": "com.squareup.retrofit2:retrofit",
+      "versions": [
+        {
+          "version": "3.0.0",
+          "rules": [
+            "retrofit3.pro"
+          ],
+          "source": "https://github.com/square/retrofit/blob/3.0.0/retrofit/src/main/resources/META-INF/proguard/retrofit2.pro"
+        }
+      ]
+    },
+    {
+      "dependency": "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm",
+      "versions": [
+        {
+          "version": "1.11.0",
+          "rules": [
+            "serialization.pro"
+          ],
+          "source": "https://github.com/Kotlin/kotlinx.serialization/tree/v1.11.0/core"
+        }
+      ]
+    },
+    {
+      "dependency": "org.slf4j:slf4j-api",
+      "versions": [
+        {
+          "version": "2.0.20",
+          "rules": [
+            "slf4j2.pro"
+          ],
+          "source": "https://github.com/qos-ch/slf4j/tree/v_2.0.20"
+        }
+      ]
+    },
+    {
+      "dependency": "ch.qos.logback:logback-core",
+      "versions": [
+        {
+          "version": "1.6.5",
+          "rules": [
+            "logback.pro"
+          ],
+          "source": "https://github.com/qos-ch/logback/tree/v_1.6.5"
+        }
+      ]
+    },
+    {
+      "dependency": "ch.qos.logback:logback-classic",
+      "versions": [
+        {
+          "version": "1.6.5",
+          "rules": [
+            "logback-classic.pro"
+          ],
+          "source": "https://github.com/qos-ch/logback/tree/v_1.6.5"
+        }
+      ]
+    },
+    {
+      "dependency": "net.java.dev.jna:jna",
+      "versions": [
+        {
+          "version": "5.19.1",
+          "rules": [
+            "jna.pro"
+          ],
+          "source": "https://github.com/java-native-access/jna/tree/5.19.1"
+        }
+      ]
+    },
+    {
+      "dependency": "com.github.hypfvieh:dbus-java-core",
+      "versions": [
+        {
+          "version": "5.2.0",
+          "rules": [
+            "dbus.pro"
+          ],
+          "source": "https://github.com/hypfvieh/dbus-java/tree/dbus-java-parent-5.2.0"
+        }
+      ]
+    },
+    {
+      "dependency": "com.github.hypfvieh:dbus-java-transport-native-unixsocket",
+      "versions": [
+        {
+          "version": "5.2.0",
+          "rules": [
+            "dbus-native.pro"
+          ],
+          "source": "https://github.com/hypfvieh/dbus-java/tree/dbus-java-parent-5.2.0"
+        }
+      ]
+    },
+    {
+      "dependency": "org.xerial:sqlite-jdbc",
+      "versions": [
+        {
+          "version": "3.53.4.0",
+          "rules": [
+            "sqlite.pro"
+          ],
+          "source": "https://github.com/xerial/sqlite-jdbc/tree/3.53.4.0"
+        }
+      ]
+    },
+    {
+      "dependency": "com.llamatik:library-jvm",
+      "versions": [
+        {
+          "version": "1.10.1",
+          "rules": [
+            "llamatik.pro"
+          ],
+          "source": "https://github.com/ferranpons/llamatik/tree/v1.10.1"
+        }
+      ]
+    },
+    {
+      "dependency": "com.squareup.okhttp3:okhttp-jvm",
+      "versions": [
+        {
+          "version": "5.5.0",
+          "rules": [
+            "okhttp5.pro"
+          ],
+          "source": "https://github.com/square/okhttp/tree/parent-5.5.0"
+        }
+      ]
+    },
+    {
+      "dependency": "net.java.dev.jna:jna-platform",
+      "versions": [
+        {
+          "version": "5.19.1",
+          "rules": [
+            "jna-platform.pro"
+          ],
+          "source": "https://github.com/java-native-access/jna/blob/5.19.1/contrib/platform/src/com/sun/jna/platform/unix/LibCAPI.java"
         }
       ]
     }

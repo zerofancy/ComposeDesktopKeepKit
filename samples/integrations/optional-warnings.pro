@@ -1,0 +1,14 @@
+# Test-only baseline: isolate missing keep rules from optional-class warnings.
+-dontwarn jakarta.servlet.**
+-dontwarn jakarta.mail.**
+-dontwarn org.jline.jansi.**
+-dontwarn org.tukaani.xz.**
+-dontwarn org.graalvm.nativeimage.**
+-dontwarn com.oracle.svm.core.annotate.**
+-dontwarn org.bouncycastle.**
+-dontwarn org.conscrypt.**
+-dontwarn org.openjsse.**
+-dontwarn android.**
+-dontwarn javax.annotation.**
+-dontwarn org.slf4j.Logger
+-dontwarn org.slf4j.LoggerFactory

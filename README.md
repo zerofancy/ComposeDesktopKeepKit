@@ -35,13 +35,13 @@ pluginManagement {
 ```kotlin
 plugins {
     id("org.jetbrains.compose") // 沿用项目原有版本
-    id("io.github.zerofancy.compose-desktop-keep-kit") version "v0.1.1"
+    id("io.github.zerofancy.compose-desktop-keep-kit") version "v0.2.0"
 }
 ```
 
 版本包含 Git 标签的 `v` 前缀。使用 `useModule` 直接解析实现模块，不依赖 JitPack 上的 Gradle plugin marker。以上是一次性的仓库接入设置，keep 规则不需要配置。
 
-`v0.1.1` 已在 JitPack 发布，并通过真实远端下载、Release PNG/SVG 运行和配置缓存复用验证。详见 [JitPack 验证记录](docs/jitpack-validation.html)。首次请求可能需要等待 JitPack 构建；可在 [JitPack 项目页](https://jitpack.io/#zerofancy/ComposeDesktopKeepKit) 查看状态。尚未发布到 Gradle Plugin Portal / Maven Central。
+当前版本为 `v0.2.0`，通过 Git 标签在 JitPack 发布。此前 `v0.1.1` 的真实远端下载、Release PNG/SVG 运行和配置缓存复用验证详见 [JitPack 验证记录](docs/jitpack-validation.html)。首次请求可能需要等待 JitPack 构建；可在 [JitPack 项目页](https://jitpack.io/#zerofancy/ComposeDesktopKeepKit) 查看状态。尚未发布到 Gradle Plugin Portal / Maven Central。
 
 源码开发仍可在 `pluginManagement` 使用 `includeBuild("/path/to/ComposeDesktopKeepKit")`，此时插件声明不写版本。
 
@@ -61,6 +61,8 @@ keepKit {
 
 当前内置规则版本：
 
+`v0.2.0` 包含下表全部支持；新增依赖均经过单独引入的 Release 验证，详见 [依赖隔离验证](docs/integrations-validation.html)。
+
 | 依赖坐标 | 规则版本 | 用途 |
 | --- | --- | --- |
 | `io.coil-kt.coil3:coil-core-jvm` | 3.3.0 | 保留 Coil 服务接口及动态实现 |
@@ -68,6 +70,21 @@ keepKit {
 | `io.coil-kt.coil3:coil-svg-jvm` | 3.3.0 | 同上，SVG decoder |
 | `com.squareup.okhttp3:okhttp` | 4.12.0 | 可选 TLS / 平台引用警告及 PublicSuffixDatabase 名称 |
 | `com.squareup.okio:okio-jvm` | 3.15.0 | 防止 ProGuard 优化 Kotlin 多文件门面后的 VerifyError |
+| `com.squareup.okhttp3:okhttp` / `okhttp-jvm` | 5.5.0 | 后缀数据库资源名称、可选 TLS / Android 引用 |
+| `com.squareup.retrofit2:retrofit` | 3.0.0 | 服务注解、泛型签名与代理接口 |
+| `org.jetbrains.kotlinx:kotlinx-serialization-core-jvm` | 1.11.0 | Companion / object 序列化入口与 descriptor 优化保护 |
+| `org.slf4j:slf4j-api` | 2.0.20 | SLF4J provider SPI 名称和构造入口 |
+| `ch.qos.logback:logback-core` / `logback-classic` | 1.6.5 | XML 扩展类型、JavaBean 属性、Configurator SPI 与注解枚举 |
+| `net.java.dev.jna:jna` | 5.19.1 | JNI 固定名称、Library 方法、Structure 字段与 Callback 方法 |
+| `net.java.dev.jna:jna-platform` | 5.19.1 | LibCAPI 继承接口的原生函数名称 |
+| `com.github.hypfvieh:dbus-java-core` | 5.2.0 | 总线接口名称、方法、签名、结构字段及信号构造入口 |
+| `com.github.hypfvieh:dbus-java-transport-native-unixsocket` | 5.2.0 | Transport provider SPI |
+| `org.xerial:sqlite-jdbc` | 3.53.4.0 | JDBC SPI、JNI 固定成员及配置枚举反射入口 |
+| `com.llamatik:library-jvm` | 1.10.1 | Bridge native 方法名称与 GenStream 回调 |
+
+FileKit、SQLDelight 和 Retrofit serialization converter 通过最终解析到的上述传递依赖获得保护，不为外层库重复添加全包 keep。JNA Platform 仅额外保护未继承 Library 的 LibCAPI 原生函数名称。应用提供的 JNA / D-Bus 接口、Logback 标准扩展组件同样按框架角色匹配，不要求填写业务包名。JNA 原生接口及其父接口应继承 Library；其他普通父接口中的原生方法需要应用自行保留名称。
+
+本插件不扫描 XML。Logback 规则覆盖 Appender、Encoder、Layout、Filter、RollingPolicy、TriggeringPolicy、StatusListener 和 Converter 的构造入口，以及 ContextAware 组件的 JavaBean 属性；XML 中其他任意类型、反射访问的业务类仍需要应用自行配置。规则范围及运行边界见 [新增依赖验证记录](docs/integrations-validation.html)。
 
 同一坐标只选一个规则版本：优先选择 **不高于实际版本的最高版本**；若没有，则选择 **高于实际版本的最低版本**。采用 Maven `ComparableVersion` 3.9.9，包含数字段和预发布排序；不设置版本区间，也不阻断跨主版本回退。版本回退不代表所有版本都经过运行验证。
 
@@ -95,6 +112,9 @@ keepKit {
 ./gradlew check
 ./gradlew -p samples/coil-desktop runRelease
 ./gradlew -p samples/coil-kmp runRelease
+./gradlew -p samples/integrations runRelease
+# 逐依赖单独引入的正例和禁用规则反例（预期失败由脚本判定）：
+python3 samples/integrations/verify.py
 ./gradlew publishAllPublicationsToLocalBuildRepository
 # 从 JitPack 下载已发布插件，不使用 includeBuild 或 mavenLocal：
 ./gradlew -p samples/jitpack-consumer runRelease
@@ -109,6 +129,8 @@ keepKit {
 ```
 
 当前 Linux 验证基线：Gradle 8.14.3、Kotlin 2.2.0、Compose 1.9.3、ProGuard 7.7.0，插件/样例字节码目标 JDK 17，运行 JDK 21。支持 JVM SourceSet 和单 JVM 目标 KMP 的 Compose application；选中的 `application.from(SourceSet/target)` 由 Compose 模型适配器读取。自定义 `fromFiles` 输入不支持，会明确失败。该适配器涉及 Compose 内部模型，其他 Compose 版本需要验证。
+
+`integrations` 样例使用 Kotlin 2.4.21 / JDK 21（Llamatik 1.10.1 的 JVM 字节码要求 JDK 21），其余沿用 Gradle 8.14.3、Compose 1.9.3、ProGuard 7.7.0。每个隔离场景只直接声明一个待测依赖（另有 Compose Desktop 基线），传递依赖由 Gradle 解析。core / JSON 序列化另外使用独立 ProGuard fixture，避免 Compose 默认序列化规则掩盖反例。FileKit、SQLDelight 和 Retrofit converter 也分别单独引入验证。
 
 TestKit 覆盖最终版本冲突/传递依赖、插件顺序、禁用、KMP/指定 SourceSet、未知依赖跳过、配置缓存复用、UP-TO-DATE、FROM-CACHE 和项目外输出。CI 配置了 Linux/Windows/macOS 验证，未完成的远端平台检查不能视为已通过。
 
