@@ -17,6 +17,8 @@ val isolatedDependencies = mapOf(
     "logback-classic" to "ch.qos.logback:logback-classic:1.6.5",
     "jna" to "net.java.dev.jna:jna:5.19.1",
     "jna-platform" to "net.java.dev.jna:jna-platform:5.19.1",
+    "jna-jpms" to "net.java.dev.jna:jna-jpms:5.16.0",
+    "jna-platform-jpms" to "net.java.dev.jna:jna-platform-jpms:5.16.0",
     "dbus-core" to "com.github.hypfvieh:dbus-java-core:5.2.0",
     "dbus-transport" to "com.github.hypfvieh:dbus-java-transport-native-unixsocket:5.2.0",
     "sqlite" to "org.xerial:sqlite-jdbc:3.53.4.0",
@@ -30,6 +32,7 @@ val isolatedMain = mapOf(
     "slf4j" to "Slf4jSmoke", "logback-core" to "LogbackCoreSmoke",
     "logback-classic" to "LogbackClassicSmoke", "jna" to "JnaSmoke",
     "jna-platform" to "JnaPlatformSmoke", "dbus-core" to "DbusCoreSmoke",
+    "jna-jpms" to "JnaSmoke", "jna-platform-jpms" to "JnaPlatformSmoke",
     "dbus-transport" to "DbusTransportSmoke", "sqlite" to "SqliteSmoke",
     "llamatik" to "LlamatikSmoke", "filekit" to "FilekitSmoke",
     "sqldelight" to "SqldelightSmoke", "retrofit-converter" to "ConverterSmoke"

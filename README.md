@@ -35,7 +35,7 @@ pluginManagement {
 ```kotlin
 plugins {
     id("org.jetbrains.compose") // 沿用项目原有版本
-    id("io.github.zerofancy.compose-desktop-keep-kit") version "v0.2.0"
+    id("io.github.zerofancy.compose-desktop-keep-kit") version "v0.2.1"
 }
 ```
 
@@ -61,7 +61,7 @@ keepKit {
 
 当前内置规则版本：
 
-`v0.2.0` 包含下表全部支持；新增依赖均经过单独引入的 Release 验证，详见 [依赖隔离验证](docs/integrations-validation.html)。
+`v0.2.1` 新增 JNA JPMS 两项支持，验证记录见 [JNA JPMS 验证](docs/jna-jpms-validation.html)。其余依赖支持自 `v0.2.0` 提供，详见 [依赖隔离验证](docs/integrations-validation.html)。
 
 | 依赖坐标 | 规则版本 | 用途 |
 | --- | --- | --- |
@@ -77,6 +77,8 @@ keepKit {
 | `ch.qos.logback:logback-core` / `logback-classic` | 1.6.5 | XML 扩展类型、JavaBean 属性、Configurator SPI 与注解枚举 |
 | `net.java.dev.jna:jna` | 5.19.1 | JNI 固定名称、Library 方法、Structure 字段与 Callback 方法 |
 | `net.java.dev.jna:jna-platform` | 5.19.1 | LibCAPI 继承接口的原生函数名称 |
+| `net.java.dev.jna:jna-jpms` | 5.16.0 | JPMS 发行物复用 JNA 的 JNI、Library、Structure 和 Callback 规则 |
+| `net.java.dev.jna:jna-platform-jpms` | 5.16.0 | JPMS Platform 复用 LibCAPI 原生函数名称规则 |
 | `com.github.hypfvieh:dbus-java-core` | 5.2.0 | 总线接口名称、方法、签名、结构字段及信号构造入口 |
 | `com.github.hypfvieh:dbus-java-transport-native-unixsocket` | 5.2.0 | Transport provider SPI |
 | `org.xerial:sqlite-jdbc` | 3.53.4.0 | JDBC SPI、JNI 固定成员及配置枚举反射入口 |

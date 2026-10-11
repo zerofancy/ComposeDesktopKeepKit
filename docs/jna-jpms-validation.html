@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JNA JPMS 规则验证</title>
+<style>body{font:16px/1.7 system-ui,sans-serif;color:#182333;background:#f6f8fb;margin:0}main{max-width:1000px;margin:40px auto;padding:32px;background:white;border-radius:16px}table{border-collapse:collapse;width:100%}th,td{padding:12px;border-bottom:1px solid #dde4ed;text-align:left}code,pre{font:13px/1.6 ui-monospace,monospace}pre{white-space:pre-wrap;overflow-wrap:anywhere}</style>
+<main>
+<h1>JNA JPMS 规则验证</h1>
+<p>2026-10-11 · v0.2.1 新增支持。复用现有 jna.pro 和 jna-platform.pro，按 JPMS 精确坐标独立匹配。</p>
+<p>验证环境：Windows x64、Microsoft JDK 21.0.12、Gradle 8.14.3、Kotlin 2.4.21、Compose 1.9.3、ProGuard 7.7.0。插件使用 Kotlin 2.2.0，目标字节码 JDK 17。</p>
+<h2>隔离 Release 验证</h2>
+<p>每个场景只直接引入表中一个待测依赖，另有 Compose Desktop 基线；启用优化和混淆。Platform 场景仅通过传递依赖获得 jna-jpms:5.16.0，Release 输入不含普通 jna 或 jna-platform。Compose 基线的 serialization 规则不参与 JNA 保护。</p>
+<table><thead><tr><th>唯一直接待测依赖</th><th>正例</th><th>禁用自身规则的反例</th></tr></thead><tbody>
+<tr><td><code>net.java.dev.jna:jna-jpms:5.16.0</code></td><td>运行成功</td><td>运行失败：UnsatisfiedLinkError，JNI 名称被混淆</td></tr>
+<tr><td><code>net.java.dev.jna:jna-platform-jpms:5.16.0</code></td><td>运行成功</td><td>运行失败：NoSuchMethodException，getuid 名称丢失；jna-jpms 规则仍启用</td></tr>
+</tbody></table>
+<p>JNA 正例调用 Windows C 运行库的 _getpid，验证 Structure 字段读写、真实原生 Callback 调用，以及嵌套结构体继承 OPTIONS。Platform 正例调用 Kernel32.GetCurrentProcessId，并用运行时方法名检查 LibCAPI.getuid，防止 ProGuard 自动识别固定反射调用而掩盖规则反例。</p>
+<p>本次未在 Linux 或 macOS 执行，也未测试 module-path / 命名模块启动；此处验证的是 Compose Desktop 在 classpath 上使用 JPMS 发行物的收缩与混淆。</p>
+<h2>规则匹配测试与回归</h2>
+<p>RuleCatalogTest 覆盖两个 JPMS 坐标的精确匹配、与普通版共同出现时的规则去重，以及仅禁用 jna-jpms 时 Platform 规则仍保留。</p>
+<p>完整 check 通过：RuleCatalogTest 9 项、KeepKitPluginTest 3 项，均无失败。coil-desktop 与 coil-kmp 的 runRelease 均通过真实本地 HTTP PNG / SVG 获取与解码断言；两个回归样例使用 Kotlin 2.2.0 / Compose 1.9.3 / ProGuard 7.7.0，目标字节码 JDK 17，运行 JDK 21。</p>
+<h2>重现</h2>
+<pre>python samples/integrations/verify.py --only jna-jpms-positive jna-jpms-negative jna-platform-jpms-positive jna-platform-jpms-negative
+./gradlew check
+./gradlew -p samples/coil-desktop runRelease
+./gradlew -p samples/coil-kmp runRelease</pre>
+<p>运行日志与结果位于 samples/integrations/build/verification；禁用反例必须在 runRelease 运行阶段失败，编译或 ProGuard 构建失败不计为通过。</p>
+</main></html>

@@ -2,6 +2,22 @@
   "schemaVersion": 1,
   "dependencies": [
     {
+      "dependency": "net.java.dev.jna:jna-jpms",
+      "versions": [{
+        "version": "5.16.0",
+        "rules": ["jna.pro"],
+        "source": "https://github.com/java-native-access/jna/tree/5.16.0"
+      }]
+    },
+    {
+      "dependency": "net.java.dev.jna:jna-platform-jpms",
+      "versions": [{
+        "version": "5.16.0",
+        "rules": ["jna-platform.pro"],
+        "source": "https://github.com/java-native-access/jna/blob/5.16.0/contrib/platform/src/com/sun/jna/platform/unix/LibCAPI.java"
+      }]
+    },
+    {
       "dependency": "io.coil-kt.coil3:coil-core-jvm",
       "versions": [
         {

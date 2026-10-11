@@ -36,6 +36,20 @@ class RuleCatalogTest {
         assertEquals(result, RuleCatalog.load().generate(listOf("io.coil-kt.coil3:coil-core-jvm:3.3.0", "io.coil-kt.coil3:coil-network-okhttp-jvm:3.3.0"), emptySet()))
     }
     @Test fun `report text is escaped`() { assertEquals("&lt;script&gt;&amp;&quot;&#39;", html("<script>&\"'")) }
+    @Test fun `JNA JPMS coordinates match independently and reuse deduplicated rules`() {
+        val catalog = RuleCatalog.load()
+        val jpms = listOf("net.java.dev.jna:jna-jpms:5.16.0", "net.java.dev.jna:jna-platform-jpms:5.16.0")
+        val result = catalog.generate(jpms, emptySet())
+        assertEquals(2, result.report.applications.size)
+        assertTrue(result.report.applications.all { it.selection == "exact" && it.ruleVersion == "5.16.0" })
+        val mixed = catalog.generate(jpms + listOf("net.java.dev.jna:jna:5.19.1", "net.java.dev.jna:jna-platform:5.19.1"), emptySet())
+        assertEquals(result.rules, mixed.rules)
+        assertEquals(4, mixed.report.applications.size)
+        val excluded = catalog.generate(jpms, setOf("net.java.dev.jna:jna-jpms"))
+        assertFalse(excluded.rules.contains("class com.sun.jna.Native {"))
+        assertTrue(excluded.rules.contains("interface com.sun.jna.platform.unix.LibCAPI"))
+        assertEquals("excluded", excluded.report.applications.first { it.dependency == "net.java.dev.jna:jna-jpms" }.selection)
+    }
     @Test fun `integration catalog uses resolved JVM coordinates and scoped protection`() {
         val modules = listOf(
             "com.squareup.retrofit2:retrofit:3.0.0",
