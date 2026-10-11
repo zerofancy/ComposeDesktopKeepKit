@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ComposeDesktopKeepKit · 产品与技术 Spec</title><style>
+:root{color-scheme:light;--ink:#17263b;--muted:#627086;--blue:#235ed8;--line:#dbe3ef}*{box-sizing:border-box}body{margin:0;background:#f3f6fb;color:var(--ink);font:16px/1.8 system-ui,-apple-system,"Noto Sans CJK SC",sans-serif}header{background:#142b4c;color:white;padding:52px max(24px,calc((100vw - 1080px)/2))}header p{color:#cedcf2}h1{font-size:36px;line-height:1.3;margin:12px 0}main{max-width:1080px;margin:32px auto;padding:0 24px 60px}section{background:white;border:1px solid var(--line);border-radius:14px;padding:28px;margin:22px 0}h2{font-size:24px;margin:0 0 16px}h3{font-size:18px;margin:24px 0 8px}a{color:var(--blue)}nav{display:flex;flex-wrap:wrap;gap:12px 22px}table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}th{background:#f1f5fc}pre{background:#122238;color:#e1ebff;padding:20px;border-radius:10px;overflow:auto;line-height:1.6;font-size:14px}code{font-family:ui-monospace,monospace;overflow-wrap:anywhere}.note{background:#eef4ff;border-left:4px solid var(--blue);padding:14px 18px}.badge{font-size:13px;letter-spacing:1px;color:#b8d2ff}li{margin:7px 0}.muted{color:var(--muted)}@media(max-width:700px){h1{font-size:28px}section{padding:18px}main{padding:0 12px}table{display:block;overflow:auto}}@media print{body{background:white}header{background:white;color:var(--ink);padding:20px}header p{color:var(--muted)}section{break-inside:avoid}nav{display:none}main{margin:0;max-width:none}}
+</style></head><body><header><div class="badge">SPEC v0.4 · 实现同步 · 2026-10-11</div><h1>ComposeDesktopKeepKit</h1><p>按最终解析的依赖坐标与版本，自动选择内置 keep 规则并接入 Compose Desktop ProGuard。</p></header><main>
+<nav><a href="#goals">目标与范围</a><a href="#usage">接入方式</a><a href="#pipeline">依赖匹配</a><a href="#catalog">版本选择</a><a href="#tasks">构建与缓存</a><a href="#acceptance">验收</a></nav>
+<section id="goals"><h2>1. 目标与 v0.1 范围</h2><p>插件读取 Compose Desktop 最终运行依赖，为规则库中已有坐标的依赖自动添加 keep 规则。试用阶段先通过 pluginManagement.includeBuild 连接源码仓库，公开仓库发布不等于 Plugin Portal 发布。连接后默认只需应用插件，无需配置块、手写规则或额外构建命令。生成的 .pro 文件位于 Gradle 用户缓存，不出现在接入方项目目录，包括 build 目录。</p><table><tr><th>v0.1 必须交付</th><th>范围外</th></tr><tr><td>Compose Desktop + ProGuard；JVM/KMP 单桌面目标；直接与传递依赖匹配；Coil 3 内置 keep 规则；版本选择；自动添加日志；按依赖禁用；项目外输出；按需报告</td><td>JAR 内嵌规则收集；SPI 文件解析；字节码、注解、JNI、应用配置扫描；未知依赖识别与诊断；Android/R8；通用 JVM 集成</td></tr></table><p class="note">v0.1 必须实现 Coil 3 自动规则，不能仅将 Coil 3 列为候选或用通用 SPI 扫描代替。以后增加框架支持时，维护依赖坐标对应的版本化规则即可。</p></section>
+<section id="usage"><h2>2. 默认零配置，可选禁用</h2><pre>plugins {
+    id("org.jetbrains.compose")
+    id("io.github.zerofancy.compose-desktop-keep-kit") // 当前通过 includeBuild 试用
+}
+// 沿用项目原有 Release 命令。</pre><p>只有希望禁用某个依赖的自动规则时才配置：</p><pre>keepKit {
+    excludedDependencies.add("io.coil-kt.coil3:coil-core-jvm")
+}</pre><ul><li>excludedDependencies 默认空集合。元素为精确 group:module，不包含版本，不支持通配符；禁用该坐标的所有规则版本，不影响其他依赖。</li><li>禁用先于版本选择执行；已禁用坐标不生成规则、不打印“自动添加”日志。报告可列出已禁用的规则库坐标。格式错误为配置错误；格式合法但未出现或不在规则库中的坐标不报错。</li><li>仅禁用 coil-core-jvm 不会自动禁用其他 Coil 模块。若需要禁用整个 Coil 支持，列出规则库中所有对应坐标。</li><li>沿用用户原有 Release ProGuard 是否开启以及优化、混淆设置；插件不自行开启收缩。已有用户规则继续通过 Compose 原配置生效。</li></ul></section>
+<section id="pipeline"><h2>3. 依赖解析与规则生成</h2><pre>最终桌面运行依赖坐标与版本
+    → 查找内置规则库坐标
+    → 排除已禁用坐标
+    → 按版本选择一个规则版本
+    → 合并规则，写入 Gradle 用户缓存
+    → 打印自动添加日志，接入原有 Release ProGuard</pre><h3>3.1 解析范围</h3><p>通过 Compose application 与 JVM 目标模型取得运行配置，不假定配置名称。支持 Java/Kotlin JVM 与 KMP 唯一桌面目标。包含传递依赖，并以 Gradle 冲突解决后的实际版本为准，不使用构建脚本中声明的版本或动态选择器。</p><p>只有 ModuleComponentIdentifier 的 group:module:version 参与匹配。无模块坐标的本地文件、项目组件及规则库中没有坐标的依赖直接跳过，不扫描其产物、不生成未知依赖清单、不打印提示或警告。项目依赖引入的、最终解析出的外部模块仍正常匹配。</p><h3>3.2 Coil 3 必需适配</h3><p>内置 Coil 3 JVM 模块的 keep 规则。首个固定验证版本为 3.3.0；首发必须覆盖网络 fetcher 与 decoder 动态加载。实现内置 coil-core-jvm、coil-network-okhttp-jvm、coil-svg-jvm 的 3.3.0 规则，并为网络链路自动匹配 OkHttp 4.12.0 与 Okio JVM 3.15.0 的定向规则。触发坐标按实际 JVM 解析产物维护，至少包含 coil-core-jvm 与验证样例实际用到的网络/解码模块。具体条目与规则在开发时核对对应版本实现后固定发布。</p><pre># Coil 3 规则设计起点：固定模板，不扫描服务声明。
+-keep class * implements coil3.util.FetcherServiceLoaderTarget { *; }
+-keep class * implements coil3.util.DecoderServiceLoaderTarget { *; }
+-keep interface coil3.util.FetcherServiceLoaderTarget { *; }
+-keep interface coil3.util.DecoderServiceLoaderTarget { *; }</pre><p>实现已包含服务接口名称保留，且上述规则已通过真实 Release PNG/SVG 图片获取与解码验收。每条规则记录归属坐标、规则版本和来源；不同模块引用相同规则文本时输出去重，但保留各坐标的应用记录。只在对应坐标出现时应用，不因“项目使用 Compose”就保留所有 Coil 类。</p><h3>3.3 合并</h3><p>按 group、module、规则版本、文件名稳定排序，统一 UTF-8/LF。仅对规范化后完全相同的规则片段去重，不做语义删改。无匹配依赖或全部禁用时生成空规则文件，防止遗留上次规则。规则仅来自随插件发布的内置资源，不收集依赖携带的 .pro。</p></section>
+<section id="catalog"><h2>4. 内置规则库与版本选择</h2><p>规则库随插件固定发布，不在构建时请求远端。以 group:module 为索引；每个坐标下有若干以依赖版本标记的规则版本，不使用版本区间匹配。</p><pre>{
+  "schemaVersion": 1,
+  "dependency": "io.coil-kt.coil3:coil-core-jvm",
+  "versions": [
+    {
+      "version": "3.3.0",
+      "rules": ["coil3-service-loader.pro"],
+      "reason": "保留 Coil 3 动态加载的 fetcher 和 decoder",
+      "source": "对应上游固定版本的文档或源码链接",
+      "testedWith": [{"dependency": "3.3.0", "proguard": "开发时固定"}]
+    }
+  ]
+}</pre><h3>4.1 选择算法</h3><ol><li>解析到坐标 D 和实际版本 V；若 D 没有内置条目或被禁用，结束处理。</li><li>在 D 的规则版本中，选择所有小于等于 V 的版本中的最大值。精确相等自然优先。</li><li>若不存在小于等于 V 的版本，选择所有大于 V 的版本中的最小值。</li><li>每个坐标仅选择一个规则版本，并应用该版本的完整规则集合；不累加其他历史版本。</li></ol><table><tr><th>库中规则版本</th><th>实际依赖版本</th><th>选择</th></tr><tr><td>3.1.0、3.3.0、3.5.0</td><td>3.3.0</td><td>3.3.0（精确匹配）</td></tr><tr><td>同上</td><td>3.4.0</td><td>3.3.0（不高于实际版本的最近规则）</td></tr><tr><td>同上</td><td>3.0.0</td><td>3.1.0（高于实际版本的最近规则）</td></tr><tr><td>同上</td><td>4.0.0</td><td>3.5.0（沿用同一算法，不设置版本越界阻断）</td></tr></table><p>版本回退表示自动选择策略，不等于已经验证所有依赖版本。日志和报告保留实际版本与规则版本，方便定位跨版本差异。规则贡献需注明真实测试版本。</p><h3>4.2 版本比较契约</h3><p>采用公开且固定版本的 Maven ComparableVersion 比较器，避免浮点数或字符串字典序比较；数字段按数值比较，预发布限定符按比较器语义处理。比较语义与底层库版本写入规则贡献规范。Gradle 解析出的具体版本字符串参与比较，声明中的 latest.release、+ 等选择器不参与。</p><p>一个坐标的版本列表不得为空；比较器判定相等的重复版本（例如某些尾零表示）在目录校验时失败，避免选择歧义。每个版本必须引用存在的规则文件。目录损坏属于插件发布错误，生成任务失败；不静默跳过已支持坐标。</p></section>
+<section id="tasks"><h2>5. 构建集成、缓存与日志</h2><table><tr><th>任务</th><th>职责</th></tr><tr><td>generateKeepKitRules</td><td>根据已解析坐标、规则库与禁用集合生成 .pro 和 JSON；输出位于项目外缓存。</td></tr><tr><td>Release 集成步骤</td><td>在 ProGuard 读取文件前确保生成任务完成；把输出 Provider 加入 release.proguard.configurationFiles，并打印应用日志。</td></tr><tr><td>keepKitReport</td><td>按需渲染缓存内 HTML，打印报告绝对路径；不是正常构建的必要命令。</td></tr></table><p>使用 pluginManager.withPlugin 支持插件应用顺序互换。未检测到支持的 Compose application、目标有歧义或无法挂接 Release 时明确失败，不要求用户补运行配置。ProGuard 未启用时，不打印已经参与收缩的成功日志；显式报告任务仍可展示选择结果。</p><h3>5.1 自动添加日志</h3><p>解析与选择完成、规则文件准备好并接入本次 Release 后，以 Gradle lifecycle 级别逐坐标打印：</p><pre>[KeepKit] 自动为依赖 io.coil-kt.coil3:coil-core-jvm:3.3.0 添加了 keep 规则（规则版本：3.3.0，精确匹配）
+[KeepKit] 自动为依赖 example:library:3.4.0 添加了 keep 规则（规则版本：3.3.0，向下选择）</pre><p>向上选择同样写明规则版本与“向上选择”。按坐标稳定排序，每次 Release 任务图中每个坐标打印一次；规则生成 UP-TO-DATE、FROM-CACHE 或配置缓存命中时也打印。因此日志由不缓存的轻量集成步骤读取选择结果，不只放在生成任务 action 中。禁用或不在规则库中的依赖不打印添加日志。</p><h3>5.2 项目外输出</h3><pre>&lt;GRADLE_USER_HOME&gt;/caches/compose-desktop-keep-kit/&lt;pluginVersion&gt;/
+    work/&lt;buildAndApplicationScope&gt;/&lt;contentKey&gt;/
+        generated.pro
+        report.json
+        report.html</pre><ul><li>尊重 Gradle 实际用户目录；不在接入方项目内生成 .pro、报告或临时文件，也不修改用户规则文件。</li><li>contentKey 包含匹配坐标及实际版本、选中规则版本和文本、规则库版本、禁用配置及影响输出的集成上下文。无需读取依赖 JAR、服务文件或应用资源内容。</li><li>构建/应用工作区独占；共享内容条目以锁和原子发布保护，禁止并发覆盖可变输出。文件缺失或损坏时自动重建；配置缓存恢复后仍确保输出存在。</li><li>配置阶段不解析依赖；使用惰性 Provider 与类型化任务属性，执行阶段不访问 Project/Configuration 对象。</li><li>输出稳定排序、UTF-8/LF，无时间戳和机器绝对路径。验证配置缓存、UP-TO-DATE 与构建缓存；共享条目不能破坏 Gradle 输出追踪。</li><li>不在构建结束时立即删除仍可能被读取的文件；无活动构建时可清理插件缓存，下次自动重建。</li></ul><h3>实现结构</h3><pre>plugin/    extension、任务、Compose 集成、日志
+core/      坐标匹配、版本选择、规则合并、应用记录
+rules/     内置 manifest 与 .pro 模板
+integration-tests/  TestKit、真实收缩运行 fixtures
+samples/   JVM/KMP 接入样例
+docs/      spec、贡献规范、兼容矩阵</pre></section>
+<section><h2>6. 报告与错误</h2><p>JSON/HTML 仅记录规则库中实际出现的坐标及其规则版本、实际依赖版本、选择方式、规则来源、去重关联和禁用状态；不维护未知依赖清单。HTML 对所有动态文本转义。报告和生成规则均保留在 Gradle 用户缓存，正常接入方无需打开报告。</p><p>依赖解析失败、禁用坐标格式错误、内置目录损坏、版本比较异常或集成不支持时明确失败，不给下游提供半成品规则。规则库没有对应坐标时静默跳过。已支持坐标按最近版本策略处理，不再产生“版本越界、需手动适配”的分支。</p></section>
+<section id="acceptance"><h2>7. 验收与阶段</h2><table><tr><th>验收项</th><th>通过条件</th></tr><tr><td>零配置</td><td>JVM/KMP 唯一桌面目标 fixture 仅应用插件即可接入真实 Compose ProGuard；应用顺序互换有效。</td></tr><tr><td>Coil 3 必需支持</td><td>Coil 3.3.0 网络/解码样例无手写规则；通过最终解析坐标自动选择内置规则。在混淆和优化开启的 Release JAR 中请求本地 HTTP 图片，返回成功且实际完成解码；无插件负例能复现动态实现丢失。另做 Compose Release 启动烟测。</td></tr><tr><td>解析</td><td>直接、传递依赖与冲突后的最终版本正确；规则库外坐标和无模块坐标组件跳过，外部传递模块可匹配。</td></tr><tr><td>选择算法</td><td>精确相等、向下取最大、无向下候选时向上取最小、只有一个版本、跨主版本、数字段及预发布排序均覆盖；每个坐标只选一版。</td></tr><tr><td>禁用</td><td>默认启用；配置 group:module 后该坐标所有版本不添加、不打印添加日志，不影响其他依赖；改变禁用配置使结果更新。</td></tr><tr><td>未知依赖</td><td>不扫描其 JAR、SPI、内嵌规则或资源；无未知依赖日志、警告和报告项。</td></tr><tr><td>日志</td><td>包含“自动为依赖 xxx 添加了 keep 规则”、实际与规则版本、选择方式；普通运行、UP-TO-DATE、FROM-CACHE 和配置缓存命中均输出一次。</td></tr><tr><td>输出与缓存</td><td>接入方项目树无插件 .pro/报告；并发不覆盖；自定义 GRADLE_USER_HOME 有效；清空缓存后自动恢复；依赖/规则库/禁用配置变化后更新，删除依赖不残留规则。</td></tr><tr><td>正确性</td><td>重复规则内容去重且保留来源；空匹配输出为空；坏目录失败；HTML 转义；配置缓存无问题。</td></tr></table><ol><li><strong>M1：</strong>固定规则目录、版本比较与选择、禁用配置、确定性合并；Coil 3 规则纳入首版。</li><li><strong>M2：</strong>Compose 自动接入、项目外缓存、每次构建日志、按需报告、TestKit 验证。</li><li><strong>M3：</strong>真实 Coil Release 链路验证，固定 Gradle/Kotlin/JDK/Compose/ProGuard 兼容矩阵和跨平台 CI，完成 0.1.0。</li></ol><p>优先验证历史场景 Compose 1.9.3 / ProGuard 7.7.0；其余工具版本在开发中固定。未运行的平台/组合不列为已验证。发布身份、许可证在公开发布前确定。</p></section>
+<section><h2>8. Review 意见落实与依据</h2><ul><li>意见 1：Coil 3 自动 keep 规则列为 v0.1 必须交付及真实运行验收。</li><li>意见 2：删除独立 SPI、内嵌规则和资源扫描；仅按已支持的依赖坐标匹配，未知依赖直接跳过。</li><li>意见 3：版本选择改为向下最近优先、否则向上最近；增加自动添加日志和 excludedDependencies 可选禁用配置。</li></ul><p>当前已实现插件、规则库、样例和本地 Maven 发布任务；运行验证结果单独记录。原聊天历史修复作为背景，当前没有复跑消费项目。以下既有来源说明集成机制，具体实现将在固定版本上验证：</p><ul><li><a href="https://github.com/JetBrains/compose-multiplatform/blob/master/gradle-plugins/compose/src/main/kotlin/org/jetbrains/compose/desktop/application/dsl/ProguardSettings.kt">Compose ProguardSettings</a></li><li><a href="https://www.guardsquare.com/manual/configuration/usage">ProGuard Usage</a></li><li><a href="https://docs.gradle.org/current/userguide/configuration_cache_requirements.html">Gradle 配置缓存要求</a></li></ul></section>
+</main></body></html>

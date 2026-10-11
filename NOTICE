@@ -1,0 +1,22 @@
+ComposeDesktopKeepKit
+Copyright 2026 zerofancy
+Licensed under the Apache License, Version 2.0.
+
+Coil 3 rule strategy follows Coil's ProGuard guidance:
+https://github.com/coil-kt/coil/blob/3.3.0/docs/faq.md
+Coil is Copyright Coil Contributors, Apache-2.0.
+This project additionally preserves service interface names for obfuscation.
+
+OkHttp 4 optional-provider and resource-name rule strategy follows okhttp3.pro:
+https://github.com/square/okhttp/blob/parent-4.12.0/okhttp/src/main/resources/META-INF/proguard/okhttp3.pro
+OkHttp is Copyright Square, Inc., Apache-2.0.
+
+Okio multifile facade optimization workaround was reproduced in the Release
+sample, with the related ProGuard issue as background:
+https://github.com/Guardsquare/proguard/issues/533
+
+Runtime dependencies:
+Apache Maven Artifact 3.9.9: Apache-2.0
+Google Gson 2.11.0: Apache-2.0
+Kotlin Standard Library 2.2.0: Apache-2.0
+Gradle wrapper: Apache-2.0
