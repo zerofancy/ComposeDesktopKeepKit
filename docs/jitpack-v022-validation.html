@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>v0.2.2 发布验证</title>
+<style>body{font:16px/1.7 system-ui;max-width:1000px;margin:40px auto;padding:24px;color:#182333}td,th{padding:12px;border-bottom:1px solid #ddd;text-align:left}code{overflow-wrap:anywhere}a{color:#1664c0}</style>
+<h1>v0.2.2 发布验证</h1>
+<p>2026-10-11 · Windows x64 · JitPack 发布与真实远端消费验证通过。</p>
+<table>
+<tr><th>项目</th><th>结果</th></tr>
+<tr><td>源码</td><td>main 提交 <code>357fc0468f781559f543b3e055135ed5bb351ec2</code>；不可变标签 v0.2.2。</td></tr>
+<tr><td>修复</td><td>Logback core / classic 1.5.16 精确匹配；旧版可选 Janino 引用警告抑制；FileSize.valueOf(String) 反射入口保护。补充滚动文件日志、隐式 Encoder 和扫描任务注册检查。</td></tr>
+<tr><td>发布前验证</td><td>Logback 9 项隔离正反例、完整 check 的 13 项测试、两个 Coil Release PNG/SVG 回归均通过。更新 0.2.2 版本后再次执行 check 和本地 Maven 发布产物生成，通过。</td></tr>
+<tr><td>JitPack</td><td>API status=ok、isTag=true、private=false、jdk=17，提交与发布标签匹配。</td></tr>
+<tr><td>产物</td><td>POM、实现 JAR、sources JAR 可下载。实现 JAR 内 version=v0.2.2，目录包含两个 Logback 1.5.16 基线，logback-janino.pro 和 FileSize 转换规则均存在。SHA-256：<code>b3a00716b1c725873c5d67c62931712ec677276075c8e4d3b5b2f3cd43fb3459</code>。</td></tr>
+<tr><td>远端 Logback 消费</td><td>临时消费项目使用 JitPack v0.2.2，无 includeBuild / mavenLocal；唯一直接待测依赖为 logback-classic。1.5.16 开启与禁用名称混淆、1.6.5 开启名称混淆，共 3 项 Release 均通过，优化始终开启。Gradle 缓存中的插件 JAR 与直接下载的发布 JAR SHA-256 一致。</td></tr>
+<tr><td>日志运行断言</td><td>Configurator SPI、隐式 Encoder、ConsoleAppender、滚动文件 Appender 均初始化成功，maxFileSize / totalSizeCap 无配置错误，日志实际写入文件，扫描任务已注册。结束时停止 LoggerContext 并清理临时文件。</td></tr>
+<tr><td>远端 Coil 消费</td><td>samples/jitpack-consumer 使用 JitPack v0.2.2；优化和混淆开启，真实 HTTP PNG/SVG 获取与解码成功（2×2）。第二次 runRelease keepKitReport 复用配置缓存并再次成功。</td></tr>
+</table>
+<p>Gradle 8.14.3、Compose 1.9.3、ProGuard 7.7.0、Microsoft JDK 21.0.12。Logback 样例 Kotlin 2.4.21 / 目标 JDK 21；Coil 消费项目 Kotlin 2.2.0 / 目标 JDK 17。此次验证不包括 Linux/macOS、GUI、安装包、尺寸触发归档、实际配置重载或 Janino 条件脚本执行。</p>
+<p>本地日志：build/jitpack-v022-logback-1516.log、build/jitpack-v022-logback-1516-no-obfuscation.log、build/jitpack-v022-logback-165.log、build/jitpack-v022-consumer-first.log、build/jitpack-v022-consumer-second.log。</p>
+<p><a href="logback-validation.html">Logback 隔离验证记录</a> · <a href="https://jitpack.io/com/github/zerofancy/ComposeDesktopKeepKit/v0.2.2/build.log">JitPack 构建日志</a> · <a href="https://github.com/zerofancy/ComposeDesktopKeepKit/tree/v0.2.2">发布标签</a></p>
+</html>
