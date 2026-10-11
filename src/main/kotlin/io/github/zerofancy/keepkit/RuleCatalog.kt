@@ -10,7 +10,7 @@ internal data class ApplicationRecord(
     val dependency: String, val actualVersion: String, val ruleVersion: String?,
     val selection: String, val rules: List<String>, val source: String?
 )
-internal data class RuleReport(val schemaVersion: Int = 1, val pluginVersion: String = "0.1.0", val applications: List<ApplicationRecord>)
+internal data class RuleReport(val schemaVersion: Int = 1, val pluginVersion: String = PluginMetadata.version, val applications: List<ApplicationRecord>)
 internal data class GeneratedRules(val rules: String, val report: RuleReport)
 
 internal class RuleCatalog(private val document: CatalogDocument, private val readRule: (String) -> String) {

@@ -19,7 +19,7 @@ class KeepKitPlugin : Plugin<Project> {
         val extension = project.extensions.create("keepKit", KeepKitExtension::class.java)
         val supported = RuleCatalog.load().coordinates
         val scope = sha256(project.rootDir.canonicalPath + "\n" + project.path)
-        val output = File(project.gradle.gradleUserHomeDir, "caches/compose-desktop-keep-kit/0.1.0/work/$scope")
+        val output = File(project.gradle.gradleUserHomeDir, "caches/compose-desktop-keep-kit/${PluginMetadata.version}/work/$scope")
         val generate = project.tasks.register("generateKeepKitRules", GenerateKeepKitRules::class.java) {
             it.group = "keep kit"
             it.description = "Selects built-in dependency keep rules into the Gradle user cache."

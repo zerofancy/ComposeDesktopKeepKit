@@ -8,12 +8,25 @@
 
 插件 ID：`io.github.zerofancy.compose-desktop-keep-kit`。
 
-目前提供 GitHub 源码和本地 Maven 发布任务，**尚未发布到 Gradle Plugin Portal / Maven Central**。试用时先克隆仓库，在接入方 `settings.gradle.kts` 的 `pluginManagement` 中连接本地构建：
+通过 JitPack 接入，无需克隆仓库。在接入方 `settings.gradle.kts` 中配置插件仓库与坐标映射：
 
 ```kotlin
 pluginManagement {
-    includeBuild("/path/to/ComposeDesktopKeepKit")
-    repositories { gradlePluginPortal(); mavenCentral(); google() }
+    repositories {
+        maven("https://jitpack.io") {
+            content { includeGroup("com.github.zerofancy") }
+        }
+        gradlePluginPortal()
+        mavenCentral()
+        google()
+    }
+    resolutionStrategy {
+        eachPlugin {
+            if (requested.id.id == "io.github.zerofancy.compose-desktop-keep-kit") {
+                useModule("com.github.zerofancy:ComposeDesktopKeepKit:${requested.version}")
+            }
+        }
+    }
 }
 ```
 
@@ -22,9 +35,15 @@ pluginManagement {
 ```kotlin
 plugins {
     id("org.jetbrains.compose") // 沿用项目原有版本
-    id("io.github.zerofancy.compose-desktop-keep-kit")
+    id("io.github.zerofancy.compose-desktop-keep-kit") version "v0.1.1"
 }
 ```
+
+版本包含 Git 标签的 `v` 前缀。使用 `useModule` 直接解析实现模块，不依赖 JitPack 上的 Gradle plugin marker。以上是一次性的仓库接入设置，keep 规则不需要配置。
+
+远端发布状态和实测结果见 [JitPack 验证记录](docs/jitpack-validation.html)。首次请求可能需要等待 JitPack 构建；可在 [JitPack 项目页](https://jitpack.io/#zerofancy/ComposeDesktopKeepKit) 查看状态。尚未发布到 Gradle Plugin Portal / Maven Central。
+
+源码开发仍可在 `pluginManagement` 使用 `includeBuild("/path/to/ComposeDesktopKeepKit")`，此时插件声明不写版本。
 
 执行原来的 `runRelease` / Release 打包命令即可。插件不会改变是否启用 ProGuard、优化或混淆，也不会修改已有用户规则。
 
@@ -62,7 +81,7 @@ keepKit {
 
 ## 输出与诊断
 
-缓存位置：`<GRADLE_USER_HOME>/caches/compose-desktop-keep-kit/0.1.0/work/<build-scope>/<content-key>/`。不同项目和不同匹配结果隔离，原子写入并加锁。清空缓存后自动重建。
+缓存位置：`<GRADLE_USER_HOME>/caches/compose-desktop-keep-kit/<plugin-version>/work/<build-scope>/<content-key>/`。不同项目和不同匹配结果隔离，原子写入并加锁。清空缓存后自动重建。
 
 - `generateKeepKitRules`：生成规则和 JSON。
 - `keepKitReport`：按需生成 HTML，并打印可打开的绝对路径。
@@ -77,6 +96,8 @@ keepKit {
 ./gradlew -p samples/coil-desktop runRelease
 ./gradlew -p samples/coil-kmp runRelease
 ./gradlew publishAllPublicationsToLocalBuildRepository
+# 从 JitPack 下载已发布插件，不使用 includeBuild 或 mavenLocal：
+./gradlew -p samples/jitpack-consumer runRelease
 ```
 
 两个样例通过本地 HTTP 请求 PNG 和 SVG，在优化和混淆开启的真实 Release JAR 中断言获取与解码成功；成功后结束进程，避免自动创建的 OkHttp 客户端空闲线程拖延退出。它们是无窗口运行烟测，不验证 GUI 或原生安装包。
@@ -98,3 +119,9 @@ TestKit 覆盖最终版本冲突/传递依赖、插件顺序、禁用、KMP/指�
 ## 许可证
 
 Apache-2.0；规则来源及第三方组件见 [NOTICE](NOTICE)。
+
+## JitPack 发布
+
+仓库根目录的 `jitpack.yml` 固定 JDK 17，仅执行 `publishPluginMavenPublicationToMavenLocal`，发布插件实现及源码。JitPack 环境使用其 `GROUP` / `VERSION` 生成 Maven 坐标；常规本地构建仍使用 `io.github.zerofancy` 坐标。完整测试由仓库 CI 执行。
+
+新版本提交通过验证后创建新的 Git 标签，不移动已有发布标签。请求对应 JitPack POM 触发构建，再用 `samples/jitpack-consumer` 验证真实插件下载、Release 收缩及 PNG/SVG 加载。
