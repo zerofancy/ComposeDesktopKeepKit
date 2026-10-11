@@ -1,4 +1,6 @@
 # Test-only baseline: isolate missing keep rules from optional-class warnings.
+-dontwarn org.codehaus.janino.ClassBodyEvaluator
+-dontwarn org.codehaus.commons.compiler.CompileException
 -dontwarn jakarta.servlet.**
 -dontwarn jakarta.mail.**
 -dontwarn org.jline.jansi.**

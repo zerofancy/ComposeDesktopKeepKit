@@ -59,6 +59,13 @@ for name, scenario, dependency in cases:
                        ["-Pisolated=" + scenario, "-PexcludeRules=" + dependency], True))
 for wrapper in ("filekit", "sqldelight", "retrofit-converter"):
     results.append(run(wrapper + "-positive", "runRelease", ["-Pisolated=" + wrapper]))
+for scenario in ("logback-core", "logback-classic"):
+    props = ["-Pisolated=" + scenario, "-PlogbackVersion=1.5.16"]
+    results.append(run(scenario + "-1516-positive", "runRelease", props))
+    results.append(run(scenario + "-1516-negative", "runRelease",
+                       props + ["-PexcludeRules=ch.qos.logback:" + scenario], True))
+results.append(run("logback-classic-1516-no-obfuscation", "runRelease",
+                   ["-Pisolated=logback-classic", "-PlogbackVersion=1.5.16", "-PsmokeObfuscate=false"]))
 results.append(run("restored-positive", "runRelease"))
 results = [result for result in results if result is not None]
 if selected and (OUTPUT / "results.json").exists():

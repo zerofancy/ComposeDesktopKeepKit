@@ -5,7 +5,7 @@ plugins {
 }
 val onJitPack = providers.environmentVariable("JITPACK").orNull == "true"
 group = if (onJitPack) providers.environmentVariable("GROUP").orElse("com.github.zerofancy").get() else "io.github.zerofancy"
-version = if (onJitPack) providers.environmentVariable("VERSION").orElse("v0.2.1").get() else "0.2.1"
+version = if (onJitPack) providers.environmentVariable("VERSION").orElse("v0.2.2").get() else "0.2.2"
 
 tasks.processResources {
     val tokens = mapOf("version" to project.version.toString())

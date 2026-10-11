@@ -1,6 +1,10 @@
 # XML names extension classes and configures JavaBean properties reflectively.
 # Match extension roles, including application-provided components, not whole packages.
 -keepattributes RuntimeVisibleAnnotations,AnnotationDefault
+# Joran converts XML sizes via parameterType.getMethod("valueOf", String.class).
+-keepclassmembers class ch.qos.logback.core.util.FileSize {
+    public static ch.qos.logback.core.util.FileSize valueOf(java.lang.String);
+}
 # Runtime annotation default values resolve enum constants by name.
 -keepclassmembers enum ch.qos.logback.core.model.processor.ProcessingPhase {
     public static ch.qos.logback.core.model.processor.ProcessingPhase *;

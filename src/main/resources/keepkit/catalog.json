@@ -124,6 +124,11 @@
       "dependency": "ch.qos.logback:logback-core",
       "versions": [
         {
+          "version": "1.5.16",
+          "rules": ["logback.pro", "logback-janino.pro"],
+          "source": "https://github.com/qos-ch/logback/tree/v_1.5.16"
+        },
+        {
           "version": "1.6.5",
           "rules": [
             "logback.pro"
@@ -135,6 +140,11 @@
     {
       "dependency": "ch.qos.logback:logback-classic",
       "versions": [
+        {
+          "version": "1.5.16",
+          "rules": ["logback-classic.pro"],
+          "source": "https://github.com/qos-ch/logback/tree/v_1.5.16"
+        },
         {
           "version": "1.6.5",
           "rules": [

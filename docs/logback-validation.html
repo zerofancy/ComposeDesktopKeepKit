@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Logback 旧版与滚动日志规则修复验证</title>
+<style>body{font:16px/1.7 system-ui;max-width:1000px;margin:40px auto;padding:24px;color:#182333}td,th{padding:12px;border-bottom:1px solid #ddd;text-align:left}code,pre{font:13px/1.6 ui-monospace,monospace}pre{white-space:pre-wrap;overflow-wrap:anywhere}</style>
+<h1>Logback 旧版与滚动日志规则修复验证</h1>
+<p>2026-10-11 · v0.2.2 修复。既有 v0.2.1 不包含本次修复。</p>
+<h2>复现与修复</h2>
+<p>原目录只登记 1.6.5，旧版 1.5.16 因向上选择使用同一片段。独立引入 1.5.16、无 Janino 时，ProGuard 报 PropertyEvalScriptBuilder 对 ClassBodyEvaluator 和 CompileException 的缺失引用。新增 1.5.16 core / classic 基线，仅旧版 core 额外加载 logback-janino.pro；条件脚本仍要求应用自行引入 Janino，警告抑制不提供该功能。</p>
+<p>原规则加上述两条警告抑制后仍运行失败：Joran 无法通过反射找到 FileSize.valueOf(String)，maxFileSize / totalSizeCap 转换失败，RollingFileAppender 未启动。开启混淆和禁用混淆均已复现。修复只保留 FileSize 的静态 valueOf(String)，不保留整个包或关闭优化。</p>
+<h2>正式隔离样例</h2>
+<p>每个场景只直接引入一个 Logback core 或 classic（另有 Compose Desktop 基线），其余库通过正常传递依赖解析。core 验证反射创建 ConsoleAppender 和 JavaBean setter；classic 验证自定义 Configurator SPI、隐式 PatternLayoutEncoder、ConsoleAppender、SizeAndTimeBasedRollingPolicy、maxFileSize / totalSizeCap 配置、文件写入和配置扫描任务注册，并断言不存在 Logback ERROR 状态。</p>
+<p>XML 复制到独立临时文件后通过 logback.configurationFile 加载，避免 JAR 内不可监听资源导致扫描检查失效。样例结束停止 LoggerContext 并删除临时文件。不声明已验证达到尺寸后的归档、实际重载触发或 Janino 条件脚本执行。</p>
+<p>环境：Windows x64、Microsoft JDK 21.0.12、Gradle 8.14.3、Kotlin 2.4.21、Compose 1.9.3、ProGuard 7.7.0。默认开启优化和混淆，另测试 1.5.16 禁用混淆。此次未在 Linux/macOS 运行。</p>
+<h2>重现</h2>
+<p>Logback 隔离验证 9 / 9 项通过：1.5.16 和 1.6.5 的 core / classic 共 4 项正例、4 项禁用规则后的运行失败反例，以及 1.5.16 classic 禁用名称混淆的正例。完整 check 通过：RuleCatalogTest 10 项、KeepKitPluginTest 3 项，无失败。</p>
+<p>两个 Coil Release 回归（coil-desktop / coil-kmp）均通过真实本地 HTTP PNG / SVG 获取与解码断言。Coil 样例使用 Kotlin 2.2.0 / 目标 JDK 17、Compose 1.9.3、ProGuard 7.7.0，运行 JDK 21；日志位于 build/logback-coil-desktop-regression.log 和 build/logback-coil-kmp-regression.log。</p>
+<pre>python samples/integrations/verify.py --only logback-core-positive logback-core-negative logback-classic-positive logback-classic-negative logback-core-1516-positive logback-core-1516-negative logback-classic-1516-positive logback-classic-1516-negative logback-classic-1516-no-obfuscation
+./gradlew check
+./gradlew -p samples/coil-desktop runRelease
+./gradlew -p samples/coil-kmp runRelease</pre>
+<p>正反例日志及结果保存在 samples/integrations/build/verification；反例必须在 runRelease 运行阶段失败。初始缺失 Janino 导致的 ProGuard 构建失败是兼容问题复现，不计入有效 keep 反例。</p>
+</html>

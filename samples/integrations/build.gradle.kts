@@ -7,14 +7,15 @@ plugins {
 }
 kotlin { jvmToolchain(21) }
 val isolated = providers.gradleProperty("isolated").orNull
+val logbackVersion = providers.gradleProperty("logbackVersion").orElse("1.6.5").get()
 val isolatedDependencies = mapOf(
     "retrofit" to "com.squareup.retrofit2:retrofit:3.0.0",
     "okhttp" to "com.squareup.okhttp3:okhttp:5.5.0",
     "serialization" to "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.11.0",
     "serialization-core" to "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.11.0",
     "slf4j" to "org.slf4j:slf4j-api:2.0.20",
-    "logback-core" to "ch.qos.logback:logback-core:1.6.5",
-    "logback-classic" to "ch.qos.logback:logback-classic:1.6.5",
+    "logback-core" to "ch.qos.logback:logback-core:$logbackVersion",
+    "logback-classic" to "ch.qos.logback:logback-classic:$logbackVersion",
     "jna" to "net.java.dev.jna:jna:5.19.1",
     "jna-platform" to "net.java.dev.jna:jna-platform:5.19.1",
     "jna-jpms" to "net.java.dev.jna:jna-jpms:5.16.0",
@@ -77,7 +78,7 @@ compose.desktop {
         }
         jvmArgs += "-Dsmoke.only=${providers.gradleProperty("smokeOnly").orElse("all").get()}"
         buildTypes.release.proguard {
-            obfuscate.set(true)
+            obfuscate.set(providers.gradleProperty("smokeObfuscate").orElse("true").get().toBooleanStrict())
             optimize.set(true)
             // Negative controls remove keeps, while optional integrations stay absent.
             if (providers.gradleProperty("excludeRules").isPresent) {

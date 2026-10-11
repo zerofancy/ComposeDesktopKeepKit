@@ -35,7 +35,7 @@ pluginManagement {
 ```kotlin
 plugins {
     id("org.jetbrains.compose") // 沿用项目原有版本
-    id("io.github.zerofancy.compose-desktop-keep-kit") version "v0.2.1"
+    id("io.github.zerofancy.compose-desktop-keep-kit") version "v0.2.2"
 }
 ```
 
@@ -63,6 +63,8 @@ keepKit {
 
 `v0.2.1` 新增 JNA JPMS 两项支持，验证记录见 [JNA JPMS 验证](docs/jna-jpms-validation.html)。其余依赖支持自 `v0.2.0` 提供，详见 [依赖隔离验证](docs/integrations-validation.html)。
 
+`v0.2.2` 补齐 Logback 1.5.16 的精确匹配、可选 Janino 引用警告抑制，以及滚动文件日志所需的 `FileSize.valueOf(String)` 反射入口，详见 [Logback 修复验证](docs/logback-validation.html)。
+
 | 依赖坐标 | 规则版本 | 用途 |
 | --- | --- | --- |
 | `io.coil-kt.coil3:coil-core-jvm` | 3.3.0 | 保留 Coil 服务接口及动态实现 |
@@ -74,7 +76,7 @@ keepKit {
 | `com.squareup.retrofit2:retrofit` | 3.0.0 | 服务注解、泛型签名与代理接口 |
 | `org.jetbrains.kotlinx:kotlinx-serialization-core-jvm` | 1.11.0 | Companion / object 序列化入口与 descriptor 优化保护 |
 | `org.slf4j:slf4j-api` | 2.0.20 | SLF4J provider SPI 名称和构造入口 |
-| `ch.qos.logback:logback-core` / `logback-classic` | 1.6.5 | XML 扩展类型、JavaBean 属性、Configurator SPI 与注解枚举 |
+| `ch.qos.logback:logback-core` / `logback-classic` | 1.5.16、1.6.5 | XML 扩展类型、JavaBean 属性、FileSize 转换入口、Configurator SPI 与注解枚举；旧版可选 Janino 引用 |
 | `net.java.dev.jna:jna` | 5.19.1 | JNI 固定名称、Library 方法、Structure 字段与 Callback 方法 |
 | `net.java.dev.jna:jna-platform` | 5.19.1 | LibCAPI 继承接口的原生函数名称 |
 | `net.java.dev.jna:jna-jpms` | 5.16.0 | JPMS 发行物复用 JNA 的 JNI、Library、Structure 和 Callback 规则 |

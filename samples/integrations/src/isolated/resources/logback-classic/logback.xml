@@ -1,8 +1,21 @@
-<configuration>
+<configuration scan="true" scanPeriod="30 seconds">
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+        <encoder>
             <pattern>KEEPKIT %msg%n</pattern>
         </encoder>
     </appender>
-    <root level="INFO"><appender-ref ref="STDOUT"/></root>
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${fixture.log.dir}/smoke.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${fixture.log.dir}/smoke.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+            <maxHistory>2</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>KEEPKIT %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+    <root level="INFO"><appender-ref ref="STDOUT"/><appender-ref ref="FILE"/></root>
 </configuration>

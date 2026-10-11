@@ -36,6 +36,18 @@ class RuleCatalogTest {
         assertEquals(result, RuleCatalog.load().generate(listOf("io.coil-kt.coil3:coil-core-jvm:3.3.0", "io.coil-kt.coil3:coil-network-okhttp-jvm:3.3.0"), emptySet()))
     }
     @Test fun `report text is escaped`() { assertEquals("&lt;script&gt;&amp;&quot;&#39;", html("<script>&\"'")) }
+    @Test fun `Logback legacy version adds optional Janino rules without affecting modern baseline`() {
+        val catalog = RuleCatalog.load()
+        val legacy = catalog.generate(listOf("ch.qos.logback:logback-core:1.5.16", "ch.qos.logback:logback-classic:1.5.16"), emptySet())
+        assertEquals(2, legacy.report.applications.size)
+        assertTrue(legacy.report.applications.all { it.selection == "exact" && it.ruleVersion == "1.5.16" })
+        assertContains(legacy.rules, "-dontwarn org.codehaus.janino.ClassBodyEvaluator")
+        assertContains(legacy.rules, "-dontwarn org.codehaus.commons.compiler.CompileException")
+        assertContains(legacy.rules, "public static ch.qos.logback.core.util.FileSize valueOf(java.lang.String);")
+        val modern = catalog.generate(listOf("ch.qos.logback:logback-core:1.6.5"), emptySet())
+        assertFalse(modern.rules.contains("org.codehaus.janino"))
+        assertContains(modern.rules, "public static ch.qos.logback.core.util.FileSize valueOf(java.lang.String);")
+    }
     @Test fun `JNA JPMS coordinates match independently and reuse deduplicated rules`() {
         val catalog = RuleCatalog.load()
         val jpms = listOf("net.java.dev.jna:jna-jpms:5.16.0", "net.java.dev.jna:jna-platform-jpms:5.16.0")
