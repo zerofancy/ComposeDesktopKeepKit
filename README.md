@@ -35,13 +35,13 @@ pluginManagement {
 ```kotlin
 plugins {
     id("org.jetbrains.compose") // 沿用项目原有版本
-    id("io.github.zerofancy.compose-desktop-keep-kit") version "v0.2.3"
+    id("io.github.zerofancy.compose-desktop-keep-kit") version "v0.2.4"
 }
 ```
 
 版本包含 Git 标签的 `v` 前缀。使用 `useModule` 直接解析实现模块，不依赖 JitPack 上的 Gradle plugin marker。以上是一次性的仓库接入设置，keep 规则不需要配置。
 
-`v0.2.3` 已在 JitPack 发布，发布 JAR 内容、Coroutines / jsoup 独立正反例、真实远端 Release PNG/SVG 和配置缓存复用均通过，详见 [v0.2.3 发布验证](docs/jitpack-v023-validation.html)。历史记录：[v0.2.2 发布验证](docs/jitpack-v022-validation.html)、[v0.2.1 发布验证](docs/jitpack-v021-validation.html)、[v0.2.0 发布验证](docs/jitpack-v020-validation.html)、[v0.1.1 发布验证](docs/jitpack-validation.html)。首次请求可能需要等待 JitPack 构建；可在 [JitPack 项目页](https://jitpack.io/#zerofancy/ComposeDesktopKeepKit) 查看状态。尚未发布到 Gradle Plugin Portal / Maven Central。
+当前版本 `v0.2.4` 新增 DataStore / OSHI 支持，发布前验证见 [FloatClock 依赖验证](docs/floatclock-dependencies-validation.html)。历史发布记录：[v0.2.3 发布验证](docs/jitpack-v023-validation.html)、[v0.2.2 发布验证](docs/jitpack-v022-validation.html)、[v0.2.1 发布验证](docs/jitpack-v021-validation.html)、[v0.2.0 发布验证](docs/jitpack-v020-validation.html)、[v0.1.1 发布验证](docs/jitpack-validation.html)。首次请求可能需要等待 JitPack 构建；可在 [JitPack 项目页](https://jitpack.io/#zerofancy/ComposeDesktopKeepKit) 查看状态。尚未发布到 Gradle Plugin Portal / Maven Central。
 
 源码开发仍可在 `pluginManagement` 使用 `includeBuild("/path/to/ComposeDesktopKeepKit")`，此时插件声明不写版本。
 
@@ -87,7 +87,11 @@ keepKit {
 | `com.llamatik:library-jvm` | 1.10.1 | Bridge native 方法名称与 GenStream 回调 |
 | `org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm` | 1.11.0 | Dispatcher / ExceptionHandler SPI、原子更新字段、共享 Flow 的 GC 引用与局部优化保护 |
 | `org.jetbrains.kotlinx:kotlinx-coroutines-swing` | 1.11.0 | Swing Main dispatcher SPI 构造入口 |
+| `androidx.datastore:datastore-preferences-core-jvm` | 1.1.7 | 保留 shaded Protobuf 生成消息的反射字段 |
+| `com.github.oshi:oshi-core` | 6.6.5 | 保留 WMI / PDH / Linux proc 枚举的反射 `values()` 入口；原生访问复用传递 JNA 规则 |
 | `org.jsoup:jsoup` | 1.22.2 | 可选 RE2/J / JSpecify 引用、Java 11 HTTP 反射构造入口及请求方法枚举 |
+
+`v0.2.4` 新增 DataStore / OSHI 支持。FloatClock 使用的 DataStore 1.1.7 与 OSHI 6.6.5 的 Release 正反例见 [FloatClock 依赖验证](docs/floatclock-dependencies-validation.html)。DataStore core / core-okio 不添加无必要的全包 keep；独立 Okio 存储读写通过现有传递依赖规则验证。
 
 `v0.2.3` 新增以上 Coroutines / jsoup 支持。依赖审计和独立收缩正反例见 [KZAgent 依赖验证](docs/kzagent-dependencies-validation.html)。Coil 3.5.0 和 Okio 3.17.0 已能回退到现有规则；序列化应以最终解析版本为准。Compose Fluent / Haze 与特定 Compose 版本之间的二进制兼容警告，不作为通用 keep 规则自动屏蔽。
 
@@ -125,6 +129,7 @@ FileKit、SQLDelight 和 Retrofit serialization converter 通过最终解析到�
 # 逐依赖单独引入的正例和禁用规则反例（预期失败由脚本判定）：
 python3 samples/integrations/verify.py
 python3 samples/kzagent-dependencies/verify.py
+python3 samples/floatclock-dependencies/verify.py
 ./gradlew publishAllPublicationsToLocalBuildRepository
 # 从 JitPack 下载已发布插件，不使用 includeBuild 或 mavenLocal：
 ./gradlew -p samples/jitpack-consumer runRelease

@@ -4,6 +4,24 @@ import org.junit.jupiter.api.Test
 import kotlin.test.*
 
 class RuleCatalogTest {
+    @Test fun `FloatClock adapters preserve protobuf fields and WMI enum reflection without whole package keeps`() {
+        val catalog = RuleCatalog.load()
+        val modules = listOf(
+            "androidx.datastore:datastore-preferences-core-jvm:1.1.7",
+            "com.github.oshi:oshi-core:6.6.5"
+        )
+        val result = catalog.generate(modules, emptySet())
+        assertEquals(2, result.report.applications.size)
+        assertTrue(result.report.applications.all { it.selection == "exact" })
+        assertEquals(1, Regex("-keepclassmembers class ").findAll(result.rules).count())
+        assertContains(result.rules, "extends androidx.datastore.preferences.protobuf.GeneratedMessageLite")
+        assertContains(result.rules, "enum oshi.**")
+        assertContains(result.rules, "public static **[] values();")
+        assertFalse(result.rules.contains("-keep class oshi.**"))
+        assertFalse(result.rules.contains("-keep class androidx.datastore.**"))
+        assertEquals("", catalog.generate(modules, modules.map { it.substringBeforeLast(':') }.toSet()).rules)
+    }
+
     @Test fun `KZAgent missing adapters use resolved coordinates and scoped rules`() {
         val modules = listOf(
             "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.11.0",

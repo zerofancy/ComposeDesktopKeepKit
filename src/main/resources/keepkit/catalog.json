@@ -273,6 +273,30 @@
           "source": "https://github.com/jhy/jsoup/blob/jsoup-1.22.2/src/main/resources/META-INF/proguard/org.jsoup_jsoup.pro"
         }
       ]
+    },
+    {
+      "dependency": "androidx.datastore:datastore-preferences-core-jvm",
+      "versions": [
+        {
+          "version": "1.1.7",
+          "rules": [
+            "datastore-preferences.pro"
+          ],
+          "source": "https://dl.google.com/dl/android/maven2/androidx/datastore/datastore-preferences-core-jvm/1.1.7/datastore-preferences-core-jvm-1.1.7.jar"
+        }
+      ]
+    },
+    {
+      "dependency": "com.github.oshi:oshi-core",
+      "versions": [
+        {
+          "version": "6.6.5",
+          "rules": [
+            "oshi.pro"
+          ],
+          "source": "https://github.com/oshi/oshi/tree/oshi-parent-6.6.5/oshi-core/src/main/java/oshi"
+        }
+      ]
     }
   ]
 }

@@ -40,6 +40,13 @@ Hedley and contributors), with original rules for compile-only JSpecify
 annotations and Java 11 reflection/enum contracts.
 https://github.com/jhy/jsoup/tree/jsoup-1.22.2
 
+DataStore preferences rules are adapted from the packaged 1.1.7 consumer rules
+(Apache-2.0, The Android Open Source Project):
+https://dl.google.com/dl/android/maven2/androidx/datastore/datastore-preferences-core-jvm/1.1.7/datastore-preferences-core-jvm-1.1.7.jar
+The OSHI enum reflection fragment is original, based on OSHI 6.6.5 source
+(MIT, The OSHI Project Contributors):
+https://github.com/oshi/oshi/tree/oshi-parent-6.6.5/oshi-core/src/main/java/oshi
+
 Runtime dependencies:
 Apache Maven Artifact 3.9.9: Apache-2.0
 Google Gson 2.11.0: Apache-2.0
