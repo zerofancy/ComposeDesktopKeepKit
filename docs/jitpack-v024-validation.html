@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>v0.2.4 发布验证</title>
+<style>body{font:16px/1.7 system-ui,sans-serif;max-width:1050px;margin:40px auto;padding:24px;color:#203040}h1{line-height:1.3}td,th{padding:12px;border-bottom:1px solid #dde4ec;text-align:left;vertical-align:top}code{overflow-wrap:anywhere;background:#edf3f9;padding:2px 5px;border-radius:4px}a{color:#2563eb}pre{padding:16px;background:#edf3f9;overflow:auto}.status{padding:14px;background:#dcfce7;color:#166534;border-radius:8px}</style>
+</head><body>
+<h1>v0.2.4 发布验证</h1>
+<p>2026-10-12 · macOS arm64 · JitPack 发布与真实远端消费验证通过。</p>
+<p class="status">版本 v0.2.4 已可下载；发布规则与源码一致；新增依赖的混淆正反例及远程 PNG/SVG 加载均通过。</p>
+<table><thead><tr><th>项目</th><th>结果与证据</th></tr></thead><tbody>
+<tr><td>源码与标签</td><td>发布提交 <code>01d34e750f8d601ce6157301e092c8de3e5fc6c1</code>，不可变标签 <code>v0.2.4</code>。发布后验证记录与样例的远端版本映射修正另行提交，没有移动发布标签。</td></tr>
+<tr><td>新增支持</td><td>DataStore preferences-core-jvm 1.1.7：shaded Protobuf 生成消息反射字段。OSHI 6.6.5：WMI / PDH / Linux proc 枚举的 values() 反射入口；原生接口和结构体复用正常解析的 JNA / JNA Platform 规则。没有全包 keep。</td></tr>
+<tr><td>发布前验证</td><td>check 的 15 项测试、本地 Maven 发布、5 项独立 Release 正反例及两个 Coil Release 回归通过；模拟 JITPACK / GROUP / VERSION 环境的发布任务也生成了正确坐标的 POM 和 JAR。</td></tr>
+<tr><td>JitPack</td><td>API status=ok、isTag=true、private=false、jdk=17、image=legacy；commit 与标签一致。POM、实现 JAR、sources JAR 均可下载。</td></tr>
+<tr><td>发布产物</td><td>POM 坐标 <code>com.github.zerofancy:ComposeDesktopKeepKit:v0.2.4</code>；JAR 内 <code>version=v0.2.4</code> 和插件描述符正确；完整 catalog 与所有 .pro 片段逐一对照源码一致（忽略平台换行差异）。Gradle 从远端下载到缓存的 JAR 与直接下载的 JAR 的 SHA-256 一致。</td></tr>
+<tr><td>实现 JAR SHA-256</td><td><code>c522bef8ec841d42605346ea9ad0b21e505119bf74abb0b546338b349cd84b80</code></td></tr>
+<tr><td>sources JAR SHA-256</td><td><code>81c930b91b379e5cfe7d29d281f843b5a57c88beff55654bbf9bb4a5cc0ca47f</code></td></tr>
+<tr><td>新增规则的远端验证</td><td>使用 <code>--remote-version v0.2.4</code> 从 JitPack 加载插件；不使用 includeBuild / mavenLocal，每个场景只直接引入一个目标库，另有 Compose Desktop 基线。3 项正例与 2 项运行期失败反例全部通过判定。</td></tr>
+<tr><td>DataStore 正例</td><td>Preferences 写入后关闭 scope，重新打开同一文件读取原值；独立 core-okio-jvm 自定义 Serializer 的持久化、关闭、重开读写也通过。</td></tr>
+<tr><td>OSHI 正例</td><td>真实内存、CPU、进程 ID 与网卡计数更新通过，本机读取 8 个网络接口；同时验证 WMI 查询字符串以及 PDH / Linux proc 枚举反射入口。</td></tr>
+<tr><td>反例</td><td>仅禁用 DataStore 适配器后，运行时出现 Protobuf 字段查找失败；仅禁用 OSHI 适配器后，WMI 查询构造的枚举反射返回 null。构建阶段失败不计为反例通过。</td></tr>
+<tr><td>确实进行了混淆和裁剪</td><td>样例显式开启 optimize / obfuscate。脚本检查依赖类的重命名映射，并确认不可达 UnusedSmokeMarker 被裁剪；每次运行的 mapping / usage 证据单独保留。</td></tr>
+<tr><td>远端 Coil 消费</td><td>samples/jitpack-consumer 从 JitPack 加载 v0.2.4，在优化和混淆开启的 Release JAR 中通过 HTTP 获取及解码 2×2 PNG / SVG。第二次 runRelease keepKitReport 确认 Configuration cache entry reused，并再次完成图片验证。</td></tr>
+</tbody></table>
+<h2>重建记录</h2>
+<p>首次 latest 镜像构建在解析 Kotlin Gradle plugin 时遇到 Maven Central HTTP 429，未生成产物。登录并清除失败构建缓存后，同一标签的 legacy 镜像构建状态变为 ok，下载和真实远端消费验证均通过。build.log 下载端点仍返回首次失败日志，因此它不能作为成功构建的证据；成功结论依据带正确提交的 API 状态、发布产物核对和实际消费结果。</p>
+<h2>固定基线与边界</h2>
+<p>本地与远端消费验证运行在 macOS arm64 / Microsoft JDK 21.0.12.1。Gradle 8.14.3、Kotlin 2.2.0、ProGuard 7.7.0。新增依赖样例使用 Compose 1.8.2 / JVM 目标 21，对齐 FloatClock；Coil 远端样例使用 Compose 1.9.3 / JVM 目标 17。发布插件的字节码目标为 JDK 17。</p>
+<p>本次没有修改 FloatClock，也没有验证其完整 GUI 或原生安装包。OSHI 的 macOS 原生调用经过真实运行；Windows COM / PDH 与 Linux 原生路径尚未在对应系统上执行。跨平台 CI 结果不作为此次本机验证的已通过项目。</p>
+<h2>复现</h2>
+<pre>JAVA_HOME=/path/to/jdk21 python3 samples/floatclock-dependencies/verify.py --remote-version v0.2.4
+JAVA_HOME=/path/to/jdk21 ./gradlew -p samples/jitpack-consumer runRelease keepKitReport --configuration-cache
+JAVA_HOME=/path/to/jdk21 ./gradlew -p samples/jitpack-consumer runRelease keepKitReport --configuration-cache</pre>
+<p>产物、API 状态、校验结果、本地/远端 fixture 的日志和映射以及 Coil 消费日志保存在 <code>build/jitpack-v024/</code>，不纳入版本控制。</p>
+<p><a href="floatclock-dependencies-validation.html">规则范围与依赖验证</a> · <a href="https://jitpack.io/#zerofancy/ComposeDesktopKeepKit/v0.2.4">JitPack 发布页</a> · <a href="https://jitpack.io/api/builds/com.github.zerofancy/ComposeDesktopKeepKit/v0.2.4">发布 API 状态</a> · <a href="https://github.com/zerofancy/ComposeDesktopKeepKit/tree/v0.2.4">发布标签</a></p>
+</body></html>

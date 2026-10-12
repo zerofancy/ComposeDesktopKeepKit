@@ -35,6 +35,8 @@ JAVA_HOME=/path/to/jdk21 ./gradlew check
 JAVA_HOME=/path/to/jdk21 ./gradlew -p samples/coil-desktop runRelease
 JAVA_HOME=/path/to/jdk21 ./gradlew -p samples/coil-kmp runRelease</pre>
 <p>结果与日志位于 <code>samples/floatclock-dependencies/build/verification/</code>：results.json、各场景日志、mapping.txt 和 usage.txt。<code>./gradlew check</code> 与两个 Coil Release 回归样例均通过。</p>
+<h2>远端发布验证</h2>
+<p>JitPack v0.2.4 的真实远端插件同样通过全部五项正反例，不使用 includeBuild 或 mavenLocal。运行脚本时添加 <code>--remote-version v0.2.4</code>；发布产物核对与消费证据见 <a href="jitpack-v024-validation.html">v0.2.4 发布验证</a>。</p>
 <h2>验证边界</h2>
 <p>这次验证覆盖独立依赖的真实收缩运行，不代表 FloatClock 整个 GUI 或安装包已经验收。未修改 FloatClock 的构建配置或原有规则。macOS 上执行了真实 OSHI 原生调用；Windows WMI / PDH 枚举反射与 Linux proc 枚举合同在本机验证，Windows COM、PDH 原生计数和 Linux 原生调用尚未在对应系统上执行。应用自有 MacOSWindowBridge JNI 以及项目特定 Compose 规则仍需保留并另行验证。</p>
 <h2>来源</h2>
