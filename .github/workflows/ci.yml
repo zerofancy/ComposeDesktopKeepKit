@@ -23,6 +23,11 @@ jobs:
           distribution: temurin
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v4
+      - name: Register installed Java toolchains
+        run: |
+          task_gradle_home="${GRADLE_USER_HOME:-$HOME/.gradle}"
+          mkdir -p "$task_gradle_home"
+          echo "org.gradle.java.installations.fromEnv=JAVA_HOME_17_X64,JAVA_HOME_21_X64,JAVA_HOME_17_ARM64,JAVA_HOME_21_ARM64" >> "$task_gradle_home/gradle.properties"
       - run: ./gradlew check publishAllPublicationsToLocalBuildRepository --console=plain
       - run: ./gradlew -p samples/coil-desktop runRelease --console=plain
       - run: ./gradlew -p samples/coil-kmp runRelease --console=plain
@@ -42,3 +47,47 @@ jobs:
             build/reports/tests
             build/repository
             samples/*/build/compose/logs
+  dependencies:
+    name: ${{ matrix.suite }} (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        suite: [rule-regressions, integrations, kzagent-dependencies, floatclock-dependencies]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Register installed Java toolchains
+        run: |
+          task_gradle_home="${GRADLE_USER_HOME:-$HOME/.gradle}"
+          mkdir -p "$task_gradle_home"
+          echo "org.gradle.java.installations.fromEnv=JAVA_HOME_17_X64,JAVA_HOME_21_X64,JAVA_HOME_17_ARM64,JAVA_HOME_21_ARM64" >> "$task_gradle_home/gradle.properties"
+      - name: Install Linux native fixture dependency
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y libudev1
+      - name: Run isolated positive and negative dependency cases
+        run: python samples/${{ matrix.suite }}/verify.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependencies-${{ matrix.suite }}-${{ matrix.os }}
+          path: |
+            samples/${{ matrix.suite }}/build/verification
+            samples/${{ matrix.suite }}/build/**/config.pro
+            samples/${{ matrix.suite }}/build/**/rules.pro
+            samples/${{ matrix.suite }}/build/**/*mapping*.txt
+            samples/${{ matrix.suite }}/build/**/*usage*.txt
+            samples/${{ matrix.suite }}/build/compose/logs

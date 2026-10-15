@@ -5,6 +5,13 @@
 -keepclassmembers class ch.qos.logback.core.util.FileSize {
     public static ch.qos.logback.core.util.FileSize valueOf(java.lang.String);
 }
+# Other standard XML property types use the same reflective conversion contract.
+-keepclassmembers class ch.qos.logback.core.util.Duration {
+    public static ch.qos.logback.core.util.Duration valueOf(java.lang.String);
+}
+-keepclassmembers enum ch.qos.logback.core.spi.FilterReply {
+    public static **[] values();
+}
 # Runtime annotation default values resolve enum constants by name.
 -keepclassmembers enum ch.qos.logback.core.model.processor.ProcessingPhase {
     public static ch.qos.logback.core.model.processor.ProcessingPhase *;

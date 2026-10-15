@@ -1,6 +1,8 @@
 # jnidispatch resolves these core types and members by fixed JNI names.
 -keepclasseswithmembernames,includedescriptorclasses class com.sun.jna.Native { native <methods>; }
 -keep class com.sun.jna.Native {
+    # This write-only field anchors the finalizer until Native itself is unloaded.
+    private static final java.lang.Object finalizer;
     private static void dispose();
     private static com.sun.jna.NativeMapped fromNative(java.lang.Class,java.lang.Object);
     private static com.sun.jna.NativeMapped fromNative(java.lang.reflect.Method,java.lang.Object);
@@ -9,6 +11,16 @@
     private static java.lang.Class nativeType(java.lang.Class);
     static com.sun.jna.Callback$UncaughtExceptionHandler callbackExceptionHandler;
 }
+# register(String) / unregister() identify their caller by a fixed stack depth.
+# Inlining these frames changes which class is registered (notably JNA 5.15/5.16).
+-keepclassmembers,allowshrinking,allowobfuscation class com.sun.jna.Native {
+    public static void register(...);
+    public static void unregister(...);
+    static java.lang.Class getCallingClass();
+}
+# Direct mappings use reflected native method names as library symbol names.
+# Unused native methods may still shrink; no blanket keep of JNA or application code.
+-keepclasseswithmembernames,includedescriptorclasses class * { native <methods>; }
 -keep class com.sun.jna.Pointer { long peer; public <init>(long); }
 -keep class com.sun.jna.Structure {
     com.sun.jna.Pointer memory;
@@ -46,6 +58,11 @@
 -keepclassmembers class * extends com.sun.jna.Structure {
     public <fields>;
     public <init>();
+    public <init>(com.sun.jna.Pointer);
 }
 -keepclassmembers class * implements com.sun.jna.Callback { public <methods>; }
 -keepclassmembers class * implements com.sun.jna.NativeMapped { public <init>(); }
+# NativeMappedConverter.defaultValue calls Class.getEnumConstants().
+-keepclassmembers enum * implements com.sun.jna.NativeMapped { public static **[] values(); }
+# ByReference.toString reflects getValue on application-defined subclasses.
+-keepclassmembers class * extends com.sun.jna.ptr.ByReference { public *** getValue(); }

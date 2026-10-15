@@ -5,6 +5,7 @@ import pathlib
 import subprocess
 import argparse
 import os
+import re
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 OUTPUT = ROOT / "samples/integrations/build/verification"
@@ -12,6 +13,24 @@ OUTPUT.mkdir(parents=True, exist_ok=True)
 parser = argparse.ArgumentParser()
 parser.add_argument("--only", nargs="+", help="Rerun selected result names")
 selected = parser.parse_args().only
+(OUTPUT / "results.json").write_text("[]\n", encoding="utf-8")
+executed = []
+
+EXPECTED_FAILURES = {
+    "serialization": r"Serializer for class .* is not found",
+    "serialization-core": r"Serializer for class .* is not found",
+    "retrofit": r"Call return type must be parameterized",
+    "okhttp": r"Unable to load okhttp3/internal/publicsuffix/.* resource",
+    "slf4j": r"AssertionError: provider SPI",
+    "logback-core": r"ClassNotFoundException: ch.qos.logback.core.ConsoleAppender",
+    "logback-classic": r"AssertionError: (?:XML (?:rolling file )?appender|Configurator SPI)",
+    "jna": r"UnsatisfiedLinkError: '[^\n]*'",
+    "jna-platform": r"(?:NoSuchMethodException: [^\n]*getuid|UnsatisfiedLinkError: Error looking up function)",
+    "dbus-core": r"AssertionError: D-Bus reflection",
+    "dbus-transport": r"(?:NoSuchElementException|ServiceConfigurationError: [^\n]*ITransportProvider)",
+    "sqlite": r"No suitable driver found for jdbc:sqlite::memory:",
+    "llamatik": r"UnsatisfiedLinkError: 'void [^\n]*'",
+}
 
 
 def run(name, task, properties=(), negative=False):
@@ -19,15 +38,23 @@ def run(name, task, properties=(), negative=False):
         return None
     command = [str(ROOT / ("gradlew.bat" if os.name == "nt" else "gradlew")), "-p", "samples/integrations", task,
                "--console=plain", *properties]
-    with (OUTPUT / (name + ".log")).open("w") as log:
+    with (OUTPUT / (name + ".log")).open("w", encoding="utf-8") as log:
         result = subprocess.run(command, cwd=ROOT, stdout=log,
-                                stderr=subprocess.STDOUT, timeout=240)
+                                stderr=subprocess.STDOUT, timeout=600)
     output = (OUTPUT / (name + ".log")).read_text(encoding="utf-8", errors="replace")
     runtime_failure = (":runRelease FAILED" in output or ":verifySerializationSmoke FAILED" in output)
-    passed = result.returncode != 0 and runtime_failure if negative else result.returncode == 0
+    scenario = next((prop.split("=", 1)[1] for prop in properties if prop.startswith("-Pisolated=")), None)
+    expected = EXPECTED_FAILURES.get(scenario.removesuffix("-jpms") if scenario else "")
+    if negative and expected is None:
+        raise ValueError(f"Missing negative failure signature: {name}")
+    passed = (result.returncode != 0 and runtime_failure and re.search(expected, output) is not None) if negative else (
+        result.returncode == 0 and "PASS " in output)
     print(f"{'PASS' if passed else 'FAIL'} {name} (exit {result.returncode})", flush=True)
-    return {"name": name, "passed": passed, "exitCode": result.returncode,
-            "negative": negative, "runtimeFailure": runtime_failure}
+    record = {"name": name, "passed": passed, "exitCode": result.returncode,
+              "negative": negative, "runtimeFailure": runtime_failure, "expected": expected if negative else None}
+    executed.append(record)
+    (OUTPUT / "results.json").write_text(json.dumps(executed, indent=2) + "\n", encoding="utf-8")
+    return record
 
 
 results = [run("serialization-positive", "verifySerializationSmoke", ["-Pisolated=serialization"]),
@@ -68,10 +95,8 @@ results.append(run("logback-classic-1516-no-obfuscation", "runRelease",
                    ["-Pisolated=logback-classic", "-PlogbackVersion=1.5.16", "-PsmokeObfuscate=false"]))
 results.append(run("restored-positive", "runRelease"))
 results = [result for result in results if result is not None]
-if selected and (OUTPUT / "results.json").exists():
-    previous = json.loads((OUTPUT / "results.json").read_text(encoding="utf-8"))
-    by_name = {result["name"]: result for result in previous}
-    by_name.update({result["name"]: result for result in results})
-    results = list(by_name.values())
+# A partial rerun reports only cases actually executed, never stale successes.
+if selected and set(selected) != {result["name"] for result in results}:
+    raise ValueError("Unknown --only result name")
 (OUTPUT / "results.json").write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8")
-raise SystemExit(0 if all(result["passed"] for result in results) else 1)
+raise SystemExit(0 if results and all(result["passed"] for result in results) else 1)

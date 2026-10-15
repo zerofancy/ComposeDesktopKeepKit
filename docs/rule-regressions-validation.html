@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JNA / Logback / D-Bus 规则修复与回归验证</title>
+<style>
+body{font:16px/1.75 system-ui,sans-serif;color:#1d2938;max-width:1120px;margin:40px auto;padding:0 24px 64px}h1{line-height:1.35}h2{margin-top:36px}table{border-collapse:collapse;width:100%;font-size:14px}td,th{padding:12px;border:1px solid #d7dfe8;text-align:left;vertical-align:top}th{background:#f1f5f9}a{color:#1262b3}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f3f6f9;padding:18px;border-radius:8px}code,pre{font-family:ui-monospace,monospace;font-size:14px}.note{padding:18px 22px;background:#f0f6ff;border-left:4px solid #2563a6}.scroll{overflow-x:auto}
+</style>
+</head>
+<body>
+<h1>JNA / Logback / D-Bus 规则修复与回归验证</h1>
+<p>2026-10-16 · v0.2.5 修复；不改变已发布 v0.2.4 标签。</p>
+<div class="note">这批修复处理 11 项已复现的缺口：最初的 JNA GC 锚点，以及后续审计确认的 JNA 5 项、Logback 3 项、D-Bus 2 项。全部使用真实 ProGuard 收缩、优化和混淆后的程序验证；不以构建成功替代运行验证。</div>
+<h2>规则修复</h2>
+<div class="scroll"><table>
+<thead><tr><th>范围</th><th>触发条件与旧行为</th><th>修复</th></tr></thead>
+<tbody>
+<tr><td>JNA GC 生命周期</td><td>Native.finalizer 是只写不读的静态锚点。字段被裁剪后，GC 提前调用 Native.dispose()；Linux 下仍在使用的 libudev 函数指针导致 SIGSEGV。</td><td>保留该字段。每个 JVM 中执行 200 次 GC；Linux 同时创建、释放 libudev 上下文。先检查 jna.loaded，让负例以明确断言失败，避免故意制造原生段错误。</td></tr>
+<tr><td>Structure(Pointer)</td><td>只有 Pointer 构造器的 Structure 无法被 Structure.newInstance(type,pointer) 创建。</td><td>保留 public Pointer 构造器，继续保留既有的无参构造器和字段保护。</td></tr>
+<tr><td>NativeMapped 枚举</td><td>defaultValue() 调用 Class.getEnumConstants()[0]；values() 被裁剪导致 NPE。</td><td>按 NativeMapped 角色保留枚举 values()。</td></tr>
+<tr><td>直接映射的方法名</td><td>Native.register(Class,library) 按 Java native 方法名查找 C 符号；改名后 UnsatisfiedLinkError。</td><td>按 native 方法角色保留类、方法及描述符名称；不用全包 keep，未使用的 native 方法仍可裁剪。</td></tr>
+<tr><td>直接映射的调用栈</td><td>5.15/5.16 的隐式 register(String) 根据固定栈深识别调用类；优化后识别了错误的类。</td><td>只限制 Native.register / unregister / getCallingClass 的优化，允许裁剪和改名。</td></tr>
+<tr><td>ByReference 诊断</td><td>自定义子类仅供 toString() 反射的 getValue() 丢失，输出 Contract violated。</td><td>保留 ByReference 子类的 getValue()。测试自定义子类，避免内置 IntByReference 自己覆盖 toString() 掩盖问题。</td></tr>
+<tr><td>Logback FilterReply</td><td>XML onMatch/onMismatch 经 Enum.valueOf 转换，values() 被裁剪。</td><td>保留 FilterReply.values()。</td></tr>
+<tr><td>Logback Level</td><td>LevelFilter 的 level 属性依赖反射 valueOf(String)，与 root logger 的专用 level 配置路径不同。</td><td>在 classic 规则中保留 Level.valueOf(String)。</td></tr>
+<tr><td>Logback Duration</td><td>timeout、checkIncrement 等 Duration 属性无法按字符串转换。</td><td>保留 Duration.valueOf(String)，补齐 FileSize 之外的标准类型。</td></tr>
+<tr><td>D-Bus 属性注解</td><td>读取 @DBusProperty 的枚举默认值时出现 AnnotationFormatError。</td><td>精确保留 Access / EmitChangeSignal 的 values() 和常量字段名。</td></tr>
+<tr><td>D-Bus 扩展注解</td><td>通过 getDeclaredAnnotations() 才发现的注解被移除，introspection XML 静默丢失内容。</td><td>按 @DBusInterfaceName 角色保留 annotation 类型和成员，不仅保留成员。</td></tr>
+</tbody></table></div>
+<h2>正式回归样例</h2>
+<p><a href="../samples/rule-regressions/build.gradle.kts">Gradle 样例</a>仅使用 Java 插件和 ProGuard 7.7.0，通过 Gradle 解析依赖及 JDK 21，不依赖本机缓存目录。JNA、Logback 和 D-Bus 分别只直接引入自身目标库，其余来自正常传递依赖。没有引入 Compose 默认规则来保护这些入口。</p>
+<ul>
+<li>JNA：5.15.0、JPMS 5.16.0、5.19.1。每个版本 8 个场景，分别运行未收缩控制组和收缩正例；6 种逐规则负例，5.19.1 不执行只在旧版复现的调用栈负例。</li>
+<li>Logback：1.5.16、1.6.5。每个版本执行枚举、Level、Duration 和真实 XML LevelFilter 4 个场景；XML 同时断言匹配 INFO 返回 ACCEPT、不匹配 DEBUG 返回 DENY。另逐项移除 3 个转换保护运行负例。</li>
+<li>D-Bus：5.2.0。属性和扩展注解分别验证。扩展注解负例继续保留属性枚举保护，确保测试的是静默内容丢失，而非前置注解异常。</li>
+<li>每个负例仅移除一个保护，并核对该场景的具体运行异常。规则定位不再匹配时直接构建失败，不允许“负例”悄悄退化为正例。</li>
+<li>每个收缩产物要求目标依赖确实存在类改名，并确认 UnusedRegressionMarker 被裁剪。额外保留强制 GC 后的 callback 和共享内存回归。</li>
+<li>普通 native 直接映射按操作系统选用 getpid / _getpid。libudev 仅在 Linux 实际调用；其他平台仍执行通用 GC 生命周期断言。JPMS 发行物在 classpath 验证，不声明 module-path 覆盖。</li>
+</ul>
+<p>完整新增矩阵为 <strong>93 个运行断言</strong>：34 个未收缩控制组、34 个收缩正例、25 个预期运行失败反例。驱动脚本只在所有实际执行的断言通过时退出 0。</p>
+<pre>python3 samples/rule-regressions/verify.py
+# 定向排查（不会读取之前的成功结果）：
+python3 samples/rule-regressions/verify.py --family jna
+python3 samples/rule-regressions/verify.py --family logback
+python3 samples/rule-regressions/verify.py --family dbus</pre>
+<p>日志和结果位于 samples/rule-regressions/build/verification；每份产物旁另有 config.pro、rules.pro、mapping.txt、usage.txt 和 runtime.json。</p>
+<h2>既有验证补强</h2>
+<ul>
+<li>FloatClock OSHI Release 样例新增强制 GC 后重复网卡枚举与计数更新，覆盖原故障路径。</li>
+<li>integrations 的负例逐依赖检查具体错误签名；正例要求 PASS 标记。--only 只汇报本次实际执行的结果，不合并历史成功记录，未知名称直接失败。</li>
+<li>KZAgent Coroutines 两个负例加入具体 SPI / Main dispatcher 错误检查，保留 jsoup 的构建警告和运行反射两个独立反例。</li>
+</ul>
+<h2>CI 接入</h2>
+<p><a href="../.github/workflows/ci.yml">工作流</a>保留原有 check、发布产物和 Coil 验证，另以 suite × OS 的独立任务运行以下四组脚本：</p>
+<table><thead><tr><th>套件</th><th>平台矩阵</th><th>验证内容</th></tr></thead><tbody>
+<tr><td>rule-regressions</td><td>Linux / Windows / macOS</td><td>上述逐规则修复矩阵与原生 GC 回归。</td></tr>
+<tr><td>integrations</td><td>Linux / Windows / macOS</td><td>所有原有隔离依赖、传递依赖外层库、版本变体与综合回归。</td></tr>
+<tr><td>kzagent-dependencies</td><td>Linux / Windows / macOS</td><td>Coroutines / jsoup 正反例。</td></tr>
+<tr><td>floatclock-dependencies</td><td>Linux / Windows / macOS</td><td>DataStore / OSHI Release 正反例及传递 JNA 路径。</td></tr>
+</tbody></table>
+<p>每组独立保存 verification 日志、结果 JSON、ProGuard config/rules、mapping/usage 及 Compose 日志；失败时仍上传。显式登记安装的 JDK 17/21 工具链，兼容 x64 / arm64 环境变量；Linux 安装 libudev1。CI 配置完成不代表 Windows/macOS 已执行通过。</p>
+<h2>本地验证结果</h2>
+<div id="local-results">
+<p>本轮本地验证环境：Linux x86_64、OpenJDK 21.0.12.1、Gradle 8.14.3、ProGuard 7.7.0。以下结果均已实际运行。</p>
+<table><thead><tr><th>验证</th><th>结果</th></tr></thead><tbody>
+<tr><td>./gradlew check</td><td>15 个测试通过，插件校验通过。</td></tr>
+<tr><td>rule-regressions</td><td>93/93；包含 34 个未收缩控制组、34 个收缩正例、25 个逐规则反例。</td></tr>
+<tr><td>integrations</td><td>39 个场景完成并最终符合预期；首次完整执行有 37 项通过，2 个 Logback 反例的实际错误为 XML rolling file appender。匹配器补充该具体签名后，两项定向重跑通过；未将任意非零退出视为成功。</td></tr>
+<tr><td>kzagent-dependencies</td><td>7/7 正反例通过。</td></tr>
+<tr><td>floatclock-dependencies</td><td>5/5 正反例通过，包含 OSHI 强制 GC 后重复枚举和计数更新。</td></tr>
+<tr><td>Coil JVM / KMP Release</td><td>两个 PNG / SVG 加载样例通过。</td></tr>
+<tr><td>验证器边界、文档与 CI</td><td>验证器拒绝无关异常、错误失败阶段及缺少 PASS 的成功退出；Python 解析、工作流 YAML、文档本地链接和 git diff --check 通过。</td></tr>
+</tbody></table>
+<p>integrations 的首次结果保存在 build/verification/results-full-before-matcher-fix.json，最后两项重跑结果在 results.json；部分重跑脚本只汇报本次执行内容。Windows/macOS 尚未在本轮实际运行，等待远端 CI 验证。发布状态单独记录于 v0.2.5 发布验证。</p>
+</div>
+<h2>范围边界</h2>
+<p>新回归覆盖固定版本的具体框架合同，不能证明所有 API、所有旧版本和所有应用都无需补规则。Logback 任意业务类型的 XML 反射仍需要应用规则；JNA 普通父接口原生符号名仍应遵循 Library 继承约定。发布状态见 <a href="jitpack-v025-validation.html">v0.2.5 发布验证</a>。本轮不替换消费项目安装包，也不声明 GUI、模块化 JPMS 或真实 D-Bus 服务连接验证。</p>
+<p>上游依据：<a href="https://github.com/java-native-access/jna/tree/5.19.1">JNA 5.19.1</a>、<a href="https://github.com/java-native-access/jna/blob/5.15.0/src/com/sun/jna/Native.java">JNA 5.15.0 Native</a>、<a href="https://github.com/qos-ch/logback/blob/v_1.6.5/logback-core/src/main/java/ch/qos/logback/core/joran/util/StringToObjectConverter.java">Logback 转换入口</a>、<a href="https://github.com/hypfvieh/dbus-java/blob/dbus-java-parent-5.2.0/dbus-java-core/src/main/java/org/freedesktop/dbus/messages/ExportedObject.java">D-Bus ExportedObject</a>。</p>
+</body>
+</html>

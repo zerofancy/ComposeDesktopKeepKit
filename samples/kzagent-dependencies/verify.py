@@ -9,6 +9,7 @@ wrapper = sample.parents[1] / ("gradlew.bat" if os.name == "nt" else "gradlew")
 output = sample / "build" / "verification"
 output.mkdir(parents=True, exist_ok=True)
 results = []
+(output / "results.json").write_text("[]\n", encoding="utf-8")
 cases = [(scenario + "-positive", scenario, [], None) for scenario in
          ("coroutines-core", "coroutines-swing", "jsoup")]
 cases += [(scenario + "-negative", scenario, ["-Pnegative=true"], "verifySmoke") for scenario in
@@ -26,11 +27,16 @@ for name, scenario, properties, failure_stage in cases:
     passed = result.returncode == 0 if failure_stage is None else (
         result.returncode != 0 and f"> Task :{failure_stage} FAILED" in text)
     # An arbitrary Gradle failure must never count as a successful negative control.
+    if name == "coroutines-core-negative":
+        passed = passed and "NoSuchElementException: Collection is empty" in text
+    if name == "coroutines-swing-negative":
+        passed = passed and "Module with the Main dispatcher is missing" in text
     if name == "jsoup-warnings-negative":
         passed = passed and "can't find referenced class com.google.re2j." in text
     if name == "jsoup-reflection-negative":
         passed = passed and "ClassNotFoundException: org.jsoup.helper.RequestAuthHandler" in text
     results.append(dict(name=name, passed=passed, exitCode=result.returncode, failureStage=failure_stage))
+    (output / "results.json").write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8")
     print(f"{'PASS' if passed else 'FAIL'} {name}", flush=True)
 (output / "results.json").write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8")
 raise SystemExit(0 if all(result["passed"] for result in results) else 1)

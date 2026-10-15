@@ -16,6 +16,7 @@ wrapper = sample.parents[1] / ("gradlew.bat" if os.name == "nt" else "gradlew")
 output = sample / "build" / "verification"
 output.mkdir(parents=True, exist_ok=True)
 results = []
+(output / "results.json").write_text("[]\n", encoding="utf-8")
 coordinates = {
     "datastore": "androidx.datastore:datastore-preferences-core-jvm",
     "oshi": "com.github.oshi:oshi-core",
@@ -51,6 +52,7 @@ for scenario, negative in cases:
             r"^(oshi\.[^ ]+|androidx\.datastore\.[^ ]+) -> ([^:]+):$", mapping, re.MULTILINE))
         passed = passed and renamed and "smoke.UnusedSmokeMarker" in usage
     results.append(dict(name=name, passed=passed, exitCode=result.returncode))
+    (output / "results.json").write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8")
     print(f"{'PASS' if passed else 'FAIL'} {name}", flush=True)
 (output / "results.json").write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8")
 raise SystemExit(0 if all(result["passed"] for result in results) else 1)

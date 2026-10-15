@@ -29,6 +29,17 @@ fun main() {
         check(it.queryNetworkInterface() != null)
     }
     check(system.operatingSystem.processId > 0)
+    // Native's write-only finalizer anchor must survive shrinking. Repeated
+    // enumeration on Linux also re-enters the libudev path that crashed FloatClock.
+    repeat(20) {
+        System.gc()
+        @Suppress("DEPRECATION", "removal")
+        System.runFinalization()
+        Thread.sleep(20)
+        check(System.getProperty("jna.loaded") == "true") { "JNA disposed while OSHI is live" }
+        check(hardware.getNetworkIFs(true).isNotEmpty())
+        interfaces.forEach { network -> check(network.updateAttributes()) }
+    }
     println("PASS oshi native hardware and network counters: ${interfaces.size} interfaces")
 }
 

@@ -1,0 +1,14 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>v0.2.5 发布验证</title><style>body{font:16px/1.75 system-ui,sans-serif;max-width:1080px;margin:40px auto;padding:24px;color:#203040}table{border-collapse:collapse;width:100%}td,th{padding:12px;border:1px solid #dde4ec;text-align:left;vertical-align:top}a{color:#2563a6}code{overflow-wrap:anywhere}pre{padding:16px;background:#eef4fa;white-space:pre-wrap}</style></head><body>
+<h1>v0.2.5 发布验证</h1><p>2026-10-16 · Linux x86_64 · 发布进行中。</p>
+<p>本版本修复 JNA 生命周期、反射及直接映射缺口，Logback 标准属性转换与 D-Bus 注解保护；新增 93 个运行断言，并将四组依赖验证接入三平台 CI。完整修复与本地覆盖见 <a href="rule-regressions-validation.html">规则修复记录</a>。</p>
+<table><thead><tr><th>项目</th><th>状态</th></tr></thead><tbody>
+<tr><td>发布前验证</td><td>修复阶段：15 个单元测试、93 个规则回归、39 个 integrations 场景（含 Logback 匹配器修正后的定向复跑）、7 个 KZAgent、5 个 FloatClock 正反例与两个 Coil Release 样例通过。版本更新后的 check、本地 Maven 发布及 JAR 版本和所有内置规则核对通过。</td></tr>
+<tr><td>标签与远端产物</td><td>等待推送不可变标签 v0.2.5 及 JitPack 构建。</td></tr>
+<tr><td>远端消费</td><td>等待验证。发布流程会核对远端 POM / JAR 的版本、全部内置规则与源码，并从 JitPack 实际加载插件运行 Release。</td></tr>
+<tr><td>跨平台 CI</td><td>工作流已配置；尚不声明远端任务通过。</td></tr>
+</tbody></table>
+<p>发布坐标：<code>com.github.zerofancy:ComposeDesktopKeepKit:v0.2.5</code>。沿用 settings.gradle.kts 的 pluginManagement.useModule 映射。</p>
+<pre>./gradlew -p samples/jitpack-consumer runRelease keepKitReport --configuration-cache
+python3 samples/floatclock-dependencies/verify.py --remote-version v0.2.5</pre>
+<p>本机发布证据保存于 build/jitpack-v025/（不纳入版本控制）。JPMS 按 classpath 验证，不声明模块路径、GUI 或消费应用安装包验证。</p>
+<p><a href="https://jitpack.io/#zerofancy/ComposeDesktopKeepKit/v0.2.5">JitPack 发布页</a> · <a href="https://jitpack.io/api/builds/com.github.zerofancy/ComposeDesktopKeepKit/v0.2.5">发布 API</a> · <a href="https://github.com/zerofancy/ComposeDesktopKeepKit/tree/v0.2.5">发布标签</a></p></body></html>

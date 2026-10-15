@@ -35,13 +35,15 @@ pluginManagement {
 ```kotlin
 plugins {
     id("org.jetbrains.compose") // 沿用项目原有版本
-    id("io.github.zerofancy.compose-desktop-keep-kit") version "v0.2.4"
+    id("io.github.zerofancy.compose-desktop-keep-kit") version "v0.2.5"
 }
 ```
 
 版本包含 Git 标签的 `v` 前缀。使用 `useModule` 直接解析实现模块，不依赖 JitPack 上的 Gradle plugin marker。以上是一次性的仓库接入设置，keep 规则不需要配置。
 
-`v0.2.4` 已在 JitPack 发布。发布 JAR 规则核对、DataStore / OSHI 独立 Release 正反例、远端 PNG/SVG 加载和配置缓存复用均通过，详见 [v0.2.4 发布验证](docs/jitpack-v024-validation.html)。历史发布记录：[v0.2.3 发布验证](docs/jitpack-v023-validation.html)、[v0.2.2 发布验证](docs/jitpack-v022-validation.html)、[v0.2.1 发布验证](docs/jitpack-v021-validation.html)、[v0.2.0 发布验证](docs/jitpack-v020-validation.html)、[v0.1.1 发布验证](docs/jitpack-validation.html)。首次请求可能需要等待 JitPack 构建；可在 [JitPack 项目页](https://jitpack.io/#zerofancy/ComposeDesktopKeepKit) 查看状态。尚未发布到 Gradle Plugin Portal / Maven Central。
+`v0.2.5` 为本次修复版本，发布状态见 [v0.2.5 发布验证](docs/jitpack-v025-validation.html)。
+
+`v0.2.4` 的历史发布验证：发布 JAR 规则核对、DataStore / OSHI 独立 Release 正反例、远端 PNG/SVG 加载和配置缓存复用均通过，详见 [v0.2.4 发布验证](docs/jitpack-v024-validation.html)。历史发布记录：[v0.2.3 发布验证](docs/jitpack-v023-validation.html)、[v0.2.2 发布验证](docs/jitpack-v022-validation.html)、[v0.2.1 发布验证](docs/jitpack-v021-validation.html)、[v0.2.0 发布验证](docs/jitpack-v020-validation.html)、[v0.1.1 发布验证](docs/jitpack-validation.html)。首次请求可能需要等待 JitPack 构建；可在 [JitPack 项目页](https://jitpack.io/#zerofancy/ComposeDesktopKeepKit) 查看状态。尚未发布到 Gradle Plugin Portal / Maven Central。
 
 源码开发仍可在 `pluginManagement` 使用 `includeBuild("/path/to/ComposeDesktopKeepKit")`，此时插件声明不写版本。
 
@@ -65,6 +67,8 @@ keepKit {
 
 `v0.2.2` 补齐 Logback 1.5.16 的精确匹配、可选 Janino 引用警告抑制，以及滚动文件日志所需的 `FileSize.valueOf(String)` 反射入口，详见 [Logback 修复验证](docs/logback-validation.html)。
 
+`v0.2.5` 补齐 JNA 的 GC 锚点、Pointer 构造器、NativeMapped 枚举、直接映射与 ByReference 反射入口，以及 Logback 标准属性转换和 D-Bus 注解保护。逐项移除规则的运行反例、版本矩阵和 CI 覆盖见 [规则回归验证](docs/rule-regressions-validation.html)；旧版标签不包含这批修复。
+
 | 依赖坐标 | 规则版本 | 用途 |
 | --- | --- | --- |
 | `io.coil-kt.coil3:coil-core-jvm` | 3.3.0 | 保留 Coil 服务接口及动态实现 |
@@ -76,12 +80,12 @@ keepKit {
 | `com.squareup.retrofit2:retrofit` | 3.0.0 | 服务注解、泛型签名与代理接口 |
 | `org.jetbrains.kotlinx:kotlinx-serialization-core-jvm` | 1.11.0 | Companion / object 序列化入口与 descriptor 优化保护 |
 | `org.slf4j:slf4j-api` | 2.0.20 | SLF4J provider SPI 名称和构造入口 |
-| `ch.qos.logback:logback-core` / `logback-classic` | 1.5.16、1.6.5 | XML 扩展类型、JavaBean 属性、FileSize 转换入口、Configurator SPI 与注解枚举；旧版可选 Janino 引用 |
-| `net.java.dev.jna:jna` | 5.19.1 | JNI 固定名称、Library 方法、Structure 字段与 Callback 方法 |
+| `ch.qos.logback:logback-core` / `logback-classic` | 1.5.16、1.6.5 | XML 扩展类型、JavaBean 属性、FileSize / Duration / Level 转换、FilterReply 枚举、Configurator SPI 与注解枚举；旧版可选 Janino 引用 |
+| `net.java.dev.jna:jna` | 5.19.1 | JNI 名称、GC 锚点、Library / 直接映射、Structure 构造器和字段、NativeMapped 枚举与 Callback / ByReference 方法 |
 | `net.java.dev.jna:jna-platform` | 5.19.1 | LibCAPI 继承接口的原生函数名称 |
 | `net.java.dev.jna:jna-jpms` | 5.16.0 | JPMS 发行物复用 JNA 的 JNI、Library、Structure 和 Callback 规则 |
 | `net.java.dev.jna:jna-platform-jpms` | 5.16.0 | JPMS Platform 复用 LibCAPI 原生函数名称规则 |
-| `com.github.hypfvieh:dbus-java-core` | 5.2.0 | 总线接口名称、方法、签名、结构字段及信号构造入口 |
+| `com.github.hypfvieh:dbus-java-core` | 5.2.0 | 总线接口名称、方法、签名、结构字段、信号构造入口、属性注解枚举与扩展注解 |
 | `com.github.hypfvieh:dbus-java-transport-native-unixsocket` | 5.2.0 | Transport provider SPI |
 | `org.xerial:sqlite-jdbc` | 3.53.4.0 | JDBC SPI、JNI 固定成员及配置枚举反射入口 |
 | `com.llamatik:library-jvm` | 1.10.1 | Bridge native 方法名称与 GenStream 回调 |
@@ -96,6 +100,8 @@ keepKit {
 `v0.2.3` 新增以上 Coroutines / jsoup 支持。依赖审计和独立收缩正反例见 [KZAgent 依赖验证](docs/kzagent-dependencies-validation.html)。Coil 3.5.0 和 Okio 3.17.0 已能回退到现有规则；序列化应以最终解析版本为准。Compose Fluent / Haze 与特定 Compose 版本之间的二进制兼容警告，不作为通用 keep 规则自动屏蔽。
 
 FileKit、SQLDelight 和 Retrofit serialization converter 通过最终解析到的上述传递依赖获得保护，不为外层库重复添加全包 keep。JNA Platform 仅额外保护未继承 Library 的 LibCAPI 原生函数名称。应用提供的 JNA / D-Bus 接口、Logback 标准扩展组件同样按框架角色匹配，不要求填写业务包名。JNA 原生接口及其父接口应继承 Library；其他普通父接口中的原生方法需要应用自行保留名称。
+
+JNA 直接映射的 Java `native` 方法按 JNI 角色保留名称，`Native.register()` 的固定栈深调用路径禁止相关方法优化。JPMS 发行物共用以上规则；目前验证的是 Compose Desktop 的 classpath 运行方式。
 
 本插件不扫描 XML。Logback 规则覆盖 Appender、Encoder、Layout、Filter、RollingPolicy、TriggeringPolicy、StatusListener 和 Converter 的构造入口，以及 ContextAware 组件的 JavaBean 属性；XML 中其他任意类型、反射访问的业务类仍需要应用自行配置。规则范围及运行边界见 [新增依赖验证记录](docs/integrations-validation.html)。
 
@@ -130,6 +136,8 @@ FileKit、SQLDelight 和 Retrofit serialization converter 通过最终解析到�
 python3 samples/integrations/verify.py
 python3 samples/kzagent-dependencies/verify.py
 python3 samples/floatclock-dependencies/verify.py
+# 生命周期、反射、XML 与注解缺口的逐规则正反例：
+python3 samples/rule-regressions/verify.py
 ./gradlew publishAllPublicationsToLocalBuildRepository
 # 从 JitPack 下载已发布插件，不使用 includeBuild 或 mavenLocal：
 ./gradlew -p samples/jitpack-consumer runRelease
@@ -147,7 +155,7 @@ python3 samples/floatclock-dependencies/verify.py
 
 `integrations` 样例使用 Kotlin 2.4.21 / JDK 21（Llamatik 1.10.1 的 JVM 字节码要求 JDK 21），其余沿用 Gradle 8.14.3、Compose 1.9.3、ProGuard 7.7.0。每个隔离场景只直接声明一个待测依赖（另有 Compose Desktop 基线），传递依赖由 Gradle 解析。core / JSON 序列化另外使用独立 ProGuard fixture，避免 Compose 默认序列化规则掩盖反例。FileKit、SQLDelight 和 Retrofit converter 也分别单独引入验证。
 
-TestKit 覆盖最终版本冲突/传递依赖、插件顺序、禁用、KMP/指定 SourceSet、未知依赖跳过、配置缓存复用、UP-TO-DATE、FROM-CACHE 和项目外输出。CI 配置了 Linux/Windows/macOS 验证，未完成的远端平台检查不能视为已通过。
+TestKit 覆盖最终版本冲突/传递依赖、插件顺序、禁用、KMP/指定 SourceSet、未知依赖跳过、配置缓存复用、UP-TO-DATE、FROM-CACHE 和项目外输出。CI 在 Linux/Windows/macOS 分别运行 Coil、integrations、KZAgent、FloatClock 和规则缺口回归；各组保存日志与收缩诊断。规则缺口回归使用 Gradle 解析固定版本及 JDK 21，逐项移除保护，并检查指定运行异常、未收缩控制组和真实裁剪/改名。未完成的远端平台检查不能视为已通过。
 
 本地 Maven 发布产物位于 `build/repository`（插件项目自己的发布目录），包含 plugin marker 和实现模块；这不是消费项目的生成规则目录。
 
