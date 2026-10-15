@@ -16,6 +16,7 @@ import retrofit2.http.GET;
 
 public class Main {
     public interface LibC extends Library { int getpid(); }
+    public interface WindowsLibC extends Library { int _getpid(); }
     public interface IntCallback extends Callback { int apply(int value); }
     @Structure.FieldOrder({"number"})
     public static class NativeStruct extends Structure { public int number; }
@@ -53,8 +54,11 @@ public class Main {
             LoggerFactory.getLogger("smoke").info("PASS logging");
         }
         if (only.equals("all") || only.equals("jna")) {
-            LibC libc = Native.load(Platform.C_LIBRARY_NAME, LibC.class);
-            if (libc.getpid() <= 0) throw new AssertionError("JNA");
+            // Windows CRT exports _getpid; Unix libc exports getpid.
+            int pid = Platform.isWindows()
+                    ? Native.load(Platform.C_LIBRARY_NAME, WindowsLibC.class)._getpid()
+                    : Native.load(Platform.C_LIBRARY_NAME, LibC.class).getpid();
+            if (pid <= 0) throw new AssertionError("JNA");
             NativeStruct struct = new NativeStruct();
             struct.number = 42;
             struct.write();

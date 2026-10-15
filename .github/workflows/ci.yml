@@ -1,5 +1,9 @@
 name: CI
-on: [push, pull_request]
+on:
+  push:
+    # Release tags refer to already tested commits; avoid duplicate full matrices.
+    branches: ['**']
+  pull_request:
 permissions:
   contents: read
 defaults:
