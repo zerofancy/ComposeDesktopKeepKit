@@ -1,11 +1,13 @@
 <!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>v0.2.5 发布验证</title><style>body{font:16px/1.75 system-ui,sans-serif;max-width:1080px;margin:40px auto;padding:24px;color:#203040}table{border-collapse:collapse;width:100%}td,th{padding:12px;border:1px solid #dde4ec;text-align:left;vertical-align:top}a{color:#2563a6}code{overflow-wrap:anywhere}pre{padding:16px;background:#eef4fa;white-space:pre-wrap}</style></head><body>
-<h1>v0.2.5 发布验证</h1><p>2026-10-16 · Linux x86_64 · 发布进行中。</p>
+<h1>v0.2.5 发布验证</h1><p>2026-10-16 · Linux x86_64 · JitPack 发布、远端消费及三平台 CI 全部通过。</p>
 <p>本版本修复 JNA 生命周期、反射及直接映射缺口，Logback 标准属性转换与 D-Bus 注解保护；新增 93 个运行断言，并将四组依赖验证接入三平台 CI。完整修复与本地覆盖见 <a href="rule-regressions-validation.html">规则修复记录</a>。</p>
 <table><thead><tr><th>项目</th><th>状态</th></tr></thead><tbody>
 <tr><td>发布前验证</td><td>修复阶段：15 个单元测试、93 个规则回归、39 个 integrations 场景（含 Logback 匹配器修正后的定向复跑）、7 个 KZAgent、5 个 FloatClock 正反例与两个 Coil Release 样例通过。版本更新后的 check、本地 Maven 发布及 JAR 版本和所有内置规则核对通过。</td></tr>
-<tr><td>标签与远端产物</td><td>等待推送不可变标签 v0.2.5 及 JitPack 构建。</td></tr>
-<tr><td>远端消费</td><td>等待验证。发布流程会核对远端 POM / JAR 的版本、全部内置规则与源码，并从 JitPack 实际加载插件运行 Release。</td></tr>
-<tr><td>跨平台 CI</td><td>工作流已配置；尚不声明远端任务通过。</td></tr>
+<tr><td>标签与远端产物</td><td>不可变标签 <code>v0.2.5</code> 指向 <code>a00940b62c0cbc6321842362605a7c010884a36d</code>。JitPack API status=ok、isTag=true、private=false、jdk=17、image=legacy，提交与标签一致；POM、实现 JAR、sources JAR 均可下载。</td></tr>
+<tr><td>远端消费</td><td>远端 POM 坐标、JAR 内 version=v0.2.5、插件描述符、完整 catalog 和全部规则片段与源码一致（忽略平台换行）。Gradle 实际下载的 JAR 与直接下载的 JAR SHA-256 一致。Coil 在优化/混淆开启的 Release 中成功加载远端 PNG/SVG，两次 runRelease keepKitReport 均通过，第二次确认 Configuration cache entry reused。FloatClock 的 3 个正例与 2 个指定运行期失败反例全部通过，包括 DataStore 持久化重开和 OSHI 重复 GC/枚举更新。远端消费使用 JitPack，不使用 includeBuild 或 mavenLocal。</td></tr>
+<tr><td>跨平台 CI</td><td>首轮 14/15 项通过；Windows integrations 的 38/39 场景通过，综合场景因测试使用 Unix getpid 而失败，已修正为 Windows _getpid 并通过本机综合回归。最终发布提交的 <a href="https://github.com/zerofancy/ComposeDesktopKeepKit/actions/runs/38790947346">CI 15/15 项全部通过</a>。Linux / Windows / macOS 各通过核心 check / Coil、93 项规则回归、39 项 integrations、7 项 KZAgent、5 项 FloatClock。已下载三平台最终 integrations 结果并确认各 39/39 通过。发布标签沿用已验证提交，标签推送不重复执行同一完整矩阵。发布后的文档记录另行提交，不移动标签。</td></tr>
+<tr><td>实现 JAR SHA-256</td><td><code>7e2548ec377fc28bca8fa3b30476e5ab31a5ef263e3fad5b0bff7c272f6fb9d3</code></td></tr>
+<tr><td>sources JAR SHA-256</td><td><code>f00dc76b39d003dbdd15ff0ded4e0d961127a4079d319b52923ef9cdde32e916</code></td></tr>
 </tbody></table>
 <p>发布坐标：<code>com.github.zerofancy:ComposeDesktopKeepKit:v0.2.5</code>。沿用 settings.gradle.kts 的 pluginManagement.useModule 映射。</p>
 <pre>./gradlew -p samples/jitpack-consumer runRelease keepKitReport --configuration-cache

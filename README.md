@@ -41,7 +41,7 @@ plugins {
 
 版本包含 Git 标签的 `v` 前缀。使用 `useModule` 直接解析实现模块，不依赖 JitPack 上的 Gradle plugin marker。以上是一次性的仓库接入设置，keep 规则不需要配置。
 
-`v0.2.5` 为本次修复版本，发布状态见 [v0.2.5 发布验证](docs/jitpack-v025-validation.html)。
+`v0.2.5` 已发布到 JitPack，产物核对、远端 Release 消费和配置缓存复用验证通过，详见 [v0.2.5 发布验证](docs/jitpack-v025-validation.html)。
 
 `v0.2.4` 的历史发布验证：发布 JAR 规则核对、DataStore / OSHI 独立 Release 正反例、远端 PNG/SVG 加载和配置缓存复用均通过，详见 [v0.2.4 发布验证](docs/jitpack-v024-validation.html)。历史发布记录：[v0.2.3 发布验证](docs/jitpack-v023-validation.html)、[v0.2.2 发布验证](docs/jitpack-v022-validation.html)、[v0.2.1 发布验证](docs/jitpack-v021-validation.html)、[v0.2.0 发布验证](docs/jitpack-v020-validation.html)、[v0.1.1 发布验证](docs/jitpack-validation.html)。首次请求可能需要等待 JitPack 构建；可在 [JitPack 项目页](https://jitpack.io/#zerofancy/ComposeDesktopKeepKit) 查看状态。尚未发布到 Gradle Plugin Portal / Maven Central。
 

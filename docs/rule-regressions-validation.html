@@ -59,7 +59,7 @@ python3 samples/rule-regressions/verify.py --family dbus</pre>
 <tr><td>kzagent-dependencies</td><td>Linux / Windows / macOS</td><td>Coroutines / jsoup 正反例。</td></tr>
 <tr><td>floatclock-dependencies</td><td>Linux / Windows / macOS</td><td>DataStore / OSHI Release 正反例及传递 JNA 路径。</td></tr>
 </tbody></table>
-<p>每组独立保存 verification 日志、结果 JSON、ProGuard config/rules、mapping/usage 及 Compose 日志；失败时仍上传。显式登记安装的 JDK 17/21 工具链，兼容 x64 / arm64 环境变量；Linux 安装 libudev1。CI 配置完成不代表 Windows/macOS 已执行通过。</p>
+<p>每组独立保存 verification 日志、结果 JSON、ProGuard config/rules、mapping/usage 及 Compose 日志；失败时仍上传。显式登记安装的 JDK 17/21 工具链，兼容 x64 / arm64 环境变量；Linux 安装 libudev1。最终发布提交的 <a href="https://github.com/zerofancy/ComposeDesktopKeepKit/actions/runs/38790947346">CI 已全部通过</a>，包括三个平台的四组依赖验证。</p>
 <h2>本地验证结果</h2>
 <div id="local-results">
 <p>本轮本地验证环境：Linux x86_64、OpenJDK 21.0.12.1、Gradle 8.14.3、ProGuard 7.7.0。以下结果均已实际运行。</p>
@@ -72,7 +72,7 @@ python3 samples/rule-regressions/verify.py --family dbus</pre>
 <tr><td>Coil JVM / KMP Release</td><td>两个 PNG / SVG 加载样例通过。</td></tr>
 <tr><td>验证器边界、文档与 CI</td><td>验证器拒绝无关异常、错误失败阶段及缺少 PASS 的成功退出；Python 解析、工作流 YAML、文档本地链接和 git diff --check 通过。</td></tr>
 </tbody></table>
-<p>integrations 的首次结果保存在 build/verification/results-full-before-matcher-fix.json，最后两项重跑结果在 results.json；部分重跑脚本只汇报本次执行内容。Windows/macOS 尚未在本轮实际运行，等待远端 CI 验证。发布状态单独记录于 v0.2.5 发布验证。</p>
+<p>integrations 的首次结果保存在 build/verification/results-full-before-matcher-fix.json，Logback 匹配器修正后的两项定向复跑及 Windows 分支修正后的本机综合场景均通过；results.json 仅保留最近一次定向执行，部分重跑脚本只汇报本次执行内容。Linux、Windows、macOS 的远端 CI 已全部通过，各平台 integrations 39/39。首次 Windows 综合测试误用 getpid（CRT 实际导出 _getpid），已修正平台分支并在最终 CI 完整复跑通过。发布状态单独记录于 v0.2.5 发布验证。</p>
 </div>
 <h2>范围边界</h2>
 <p>新回归覆盖固定版本的具体框架合同，不能证明所有 API、所有旧版本和所有应用都无需补规则。Logback 任意业务类型的 XML 反射仍需要应用规则；JNA 普通父接口原生符号名仍应遵循 Library 继承约定。发布状态见 <a href="jitpack-v025-validation.html">v0.2.5 发布验证</a>。本轮不替换消费项目安装包，也不声明 GUI、模块化 JPMS 或真实 D-Bus 服务连接验证。</p>
