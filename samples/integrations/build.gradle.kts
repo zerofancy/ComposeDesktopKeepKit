@@ -136,3 +136,5 @@ tasks.register<JavaExec>("verifySerializationSmoke") {
         configurations.runtimeClasspath.get().files.filter { it.name.startsWith("kotlin-stdlib") }
     })
 }
+
+apply(from = "../ci-rule-inputs.gradle.kts")

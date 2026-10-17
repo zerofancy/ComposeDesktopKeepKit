@@ -155,7 +155,7 @@ python3 samples/rule-regressions/verify.py
 
 `integrations` 样例使用 Kotlin 2.4.21 / JDK 21（Llamatik 1.10.1 的 JVM 字节码要求 JDK 21），其余沿用 Gradle 8.14.3、Compose 1.9.3、ProGuard 7.7.0。每个隔离场景只直接声明一个待测依赖（另有 Compose Desktop 基线），传递依赖由 Gradle 解析。core / JSON 序列化另外使用独立 ProGuard fixture，避免 Compose 默认序列化规则掩盖反例。FileKit、SQLDelight 和 Retrofit converter 也分别单独引入验证。
 
-TestKit 覆盖最终版本冲突/传递依赖、插件顺序、禁用、KMP/指定 SourceSet、未知依赖跳过、配置缓存复用、UP-TO-DATE、FROM-CACHE 和项目外输出。CI 在 Linux/Windows/macOS 分别运行 Coil、integrations、KZAgent、FloatClock 和规则缺口回归；各组保存日志与收缩诊断。规则缺口回归使用 Gradle 解析固定版本及 JDK 21，逐项移除保护，并检查指定运行异常、未收缩控制组和真实裁剪/改名。未完成的远端平台检查不能视为已通过。
+TestKit 覆盖最终版本冲突/传递依赖、插件顺序、禁用、KMP/指定 SourceSet、未知依赖跳过、配置缓存复用、UP-TO-DATE、FROM-CACHE 和项目外输出。CI 按相对最近一次成功祖先提交的累计变更，在 Linux/Windows/macOS 选择 Coil、integrations、KZAgent、FloatClock 和规则缺口回归；固定版本且相关输入未变的场景不重复执行。纯文档提交只运行选择器检查；公共代码/构建配置、未知输入及无法确认基线时全量运行，也可从 Actions 手动触发全量。各组保存日志与收缩诊断，选择清单写入 job summary 和 ci-selection 产物。详见 [CI 按变更选择测试](docs/ci-change-selection.html)。规则缺口回归使用 Gradle 解析固定版本及 JDK 21，逐项移除保护，并检查指定运行异常、未收缩控制组和真实裁剪/改名。未完成的远端平台检查不能视为已通过。
 
 本地 Maven 发布产物位于 `build/repository`（插件项目自己的发布目录），包含 plugin marker 和实现模块；这不是消费项目的生成规则目录。
 

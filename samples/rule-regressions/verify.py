@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Exercise each repaired contract, including one-rule-at-a-time negative controls."""
 import argparse
+import sys
 import json
 import os
 from pathlib import Path
@@ -12,6 +13,8 @@ parser.add_argument("--family", choices=("all", "jna", "logback", "dbus"), defau
 arguments = parser.parse_args()
 sample = Path(__file__).resolve().parent
 root = sample.parents[1]
+sys.path.insert(0, str(root / "scripts/ci"))
+from check_inputs import check_inputs
 wrapper = root / ("gradlew.bat" if os.name == "nt" else "gradlew")
 output = sample / "build" / "verification"
 output.mkdir(parents=True, exist_ok=True)
@@ -64,6 +67,7 @@ def prepare(family, version, module, omit):
     if process.returncode:
         record(name + "-build", False, exitCode=process.returncode, log=str(log.relative_to(sample)))
         return None
+    check_inputs("rule-regressions", family, root)
     directory = sample / "build" / name
     metadata = json.loads((directory / "runtime.json").read_text(encoding="utf-8"))
     # No extra whole-package keeps or global optimizer switches may mask positives.

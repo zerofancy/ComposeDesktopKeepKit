@@ -105,3 +105,6 @@ tasks.register<JavaExec>("shrinkRegression") {
     outputs.files(directory.map { it.file("output.jar") }, directory.map { it.file("mapping.txt") }, directory.map { it.file("usage.txt") })
     doFirst { args("@${directory.get().file("config.pro").asFile.absolutePath}") }
 }
+
+extra["ciRuleFragments"] = fragments.map { it.name }
+apply(from = "../ci-manual-inputs.gradle.kts")

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Run real optimized/obfuscated positive and per-adapter negative controls."""
+import sys
 import json
 import pathlib
 import subprocess
@@ -8,12 +9,14 @@ import os
 import re
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "scripts/ci"))
+from check_inputs import check_inputs
 OUTPUT = ROOT / "samples/integrations/build/verification"
-OUTPUT.mkdir(parents=True, exist_ok=True)
 parser = argparse.ArgumentParser()
 parser.add_argument("--only", nargs="+", help="Rerun selected result names")
-selected = parser.parse_args().only
-(OUTPUT / "results.json").write_text("[]\n", encoding="utf-8")
+parser.add_argument("--list-cases", action="store_true", help="Print case names without building")
+arguments = parser.parse_args()
+selected = arguments.only
 executed = []
 
 EXPECTED_FAILURES = {
@@ -34,8 +37,6 @@ EXPECTED_FAILURES = {
 
 
 def run(name, task, properties=(), negative=False):
-    if selected and name not in selected:
-        return None
     command = [str(ROOT / ("gradlew.bat" if os.name == "nt" else "gradlew")), "-p", "samples/integrations", task,
                "--console=plain", *properties]
     with (OUTPUT / (name + ".log")).open("w", encoding="utf-8") as log:
@@ -45,6 +46,8 @@ def run(name, task, properties=(), negative=False):
     runtime_failure = (":runRelease FAILED" in output or ":verifySerializationSmoke FAILED" in output)
     scenario = next((prop.split("=", 1)[1] for prop in properties if prop.startswith("-Pisolated=")), None)
     expected = EXPECTED_FAILURES.get(scenario.removesuffix("-jpms") if scenario else "")
+    if result.returncode == 0 and not negative and task == "runRelease":
+        check_inputs("integrations", scenario or "all", ROOT)
     if negative and expected is None:
         raise ValueError(f"Missing negative failure signature: {name}")
     passed = (result.returncode != 0 and runtime_failure and re.search(expected, output) is not None) if negative else (
@@ -57,12 +60,12 @@ def run(name, task, properties=(), negative=False):
     return record
 
 
-results = [run("serialization-positive", "verifySerializationSmoke", ["-Pisolated=serialization"]),
-           run("serialization-negative", "verifySerializationSmoke",
-               ["-Pisolated=serialization", "-PserializationNegative=true"], True),
-           run("serialization-core-positive", "verifySerializationSmoke", ["-Pisolated=serialization-core"]),
-           run("serialization-core-negative", "verifySerializationSmoke",
-               ["-Pisolated=serialization-core", "-PserializationNegative=true"], True)]
+specs = [
+    ("serialization-positive", "verifySerializationSmoke", ["-Pisolated=serialization"], False),
+    ("serialization-negative", "verifySerializationSmoke", ["-Pisolated=serialization", "-PserializationNegative=true"], True),
+    ("serialization-core-positive", "verifySerializationSmoke", ["-Pisolated=serialization-core"], False),
+    ("serialization-core-negative", "verifySerializationSmoke", ["-Pisolated=serialization-core", "-PserializationNegative=true"], True),
+]
 cases = [
     # The root OkHttp component and its JVM artifact share one fragment.
     ("retrofit", "retrofit", "com.squareup.retrofit2:retrofit"),
@@ -80,23 +83,24 @@ cases = [
     ("llamatik", "llamatik", "com.llamatik:library-jvm"),
 ]
 for name, scenario, dependency in cases:
-    # Only this dependency is direct; all other libraries must come transitively.
-    results.append(run(name + "-positive", "runRelease", ["-Pisolated=" + scenario]))
-    results.append(run(name + "-negative", "runRelease",
-                       ["-Pisolated=" + scenario, "-PexcludeRules=" + dependency], True))
+    specs.append((name + "-positive", "runRelease", ["-Pisolated=" + scenario], False))
+    specs.append((name + "-negative", "runRelease", ["-Pisolated=" + scenario, "-PexcludeRules=" + dependency], True))
 for wrapper in ("filekit", "sqldelight", "retrofit-converter"):
-    results.append(run(wrapper + "-positive", "runRelease", ["-Pisolated=" + wrapper]))
+    specs.append((wrapper + "-positive", "runRelease", ["-Pisolated=" + wrapper], False))
 for scenario in ("logback-core", "logback-classic"):
     props = ["-Pisolated=" + scenario, "-PlogbackVersion=1.5.16"]
-    results.append(run(scenario + "-1516-positive", "runRelease", props))
-    results.append(run(scenario + "-1516-negative", "runRelease",
-                       props + ["-PexcludeRules=ch.qos.logback:" + scenario], True))
-results.append(run("logback-classic-1516-no-obfuscation", "runRelease",
-                   ["-Pisolated=logback-classic", "-PlogbackVersion=1.5.16", "-PsmokeObfuscate=false"]))
-results.append(run("restored-positive", "runRelease"))
-results = [result for result in results if result is not None]
-# A partial rerun reports only cases actually executed, never stale successes.
-if selected and set(selected) != {result["name"] for result in results}:
-    raise ValueError("Unknown --only result name")
+    specs.append((scenario + "-1516-positive", "runRelease", props, False))
+    specs.append((scenario + "-1516-negative", "runRelease", props + ["-PexcludeRules=ch.qos.logback:" + scenario], True))
+specs.append(("logback-classic-1516-no-obfuscation", "runRelease", ["-Pisolated=logback-classic", "-PlogbackVersion=1.5.16", "-PsmokeObfuscate=false"], False))
+specs.append(("restored-positive", "runRelease", [], False))
+known = {spec[0] for spec in specs}
+if arguments.list_cases:
+    print(json.dumps(sorted(known)))
+    raise SystemExit(0)
+if selected and not set(selected) <= known:
+    parser.error("Unknown --only result name: " + ", ".join(sorted(set(selected) - known)))
+OUTPUT.mkdir(parents=True, exist_ok=True)
+(OUTPUT / "results.json").write_text("[]\n", encoding="utf-8")
+results = [run(*spec) for spec in specs if not selected or spec[0] in selected]
 (OUTPUT / "results.json").write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8")
 raise SystemExit(0 if results and all(result["passed"] for result in results) else 1)

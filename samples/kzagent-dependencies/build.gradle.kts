@@ -79,3 +79,6 @@ tasks.register<JavaExec>("verifySmoke") {
     classpath = files(outputJar)
     systemProperty("java.awt.headless", "true")
 }
+
+extra["ciRuleFragments"] = fragments.map { it.name }
+apply(from = "../ci-manual-inputs.gradle.kts")

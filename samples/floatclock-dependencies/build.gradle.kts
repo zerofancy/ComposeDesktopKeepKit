@@ -46,3 +46,5 @@ compose.desktop {
 providers.gradleProperty("excludeRules").orNull?.let {
     keepKit { excludedDependencies.addAll(it.split(',')) }
 }
+
+apply(from = "../ci-rule-inputs.gradle.kts")

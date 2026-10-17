@@ -4,13 +4,42 @@ on:
     # Release tags refer to already tested commits; avoid duplicate full matrices.
     branches: ['**']
   pull_request:
+  workflow_dispatch:
 permissions:
   contents: read
+  actions: read
 defaults:
   run:
     shell: bash
 jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      core: ${{ steps.select.outputs.core }}
+      has-tests: ${{ steps.select.outputs.has-tests }}
+      matrix: ${{ steps.select.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test change selection and fallback behavior
+        run: python -m unittest discover -s scripts/ci -p 'test_*.py' -v
+      - name: Select affected verification
+        id: select
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python scripts/ci/plan.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ci-selection
+          path: build/ci-plan.json
   verify:
+    needs: plan
+    if: needs.plan.outputs.core == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -33,31 +62,20 @@ jobs:
           mkdir -p "$task_gradle_home"
           echo "org.gradle.java.installations.fromEnv=JAVA_HOME_17_X64,JAVA_HOME_21_X64,JAVA_HOME_17_ARM64,JAVA_HOME_21_ARM64" >> "$task_gradle_home/gradle.properties"
       - run: ./gradlew check publishAllPublicationsToLocalBuildRepository --console=plain
-      - run: ./gradlew -p samples/coil-desktop runRelease --console=plain
-      - run: ./gradlew -p samples/coil-kmp runRelease --console=plain
-      - name: Coil negative control
-        run: |
-          if ./gradlew -p samples/coil-desktop runRelease -PkeepKitNegative=true --console=plain > negative.log 2>&1; then
-            echo "Expected missing-fetcher failure, but the negative control passed"
-            exit 1
-          fi
-          grep -q "Unable to create a fetcher" negative.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: validation-${{ matrix.os }}
           path: |
-            negative.log
             build/reports/tests
             build/repository
-            samples/*/build/compose/logs
   dependencies:
-    name: ${{ matrix.suite }} (${{ matrix.os }})
+    needs: plan
+    if: needs.plan.outputs.has-tests == 'true'
+    name: ${{ matrix.label }} (${{ matrix.os }})
     strategy:
       fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        suite: [rule-regressions, integrations, kzagent-dependencies, floatclock-dependencies]
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
@@ -82,12 +100,14 @@ jobs:
       - name: Install Linux native fixture dependency
         if: runner.os == 'Linux'
         run: sudo apt-get install -y libudev1
-      - name: Run isolated positive and negative dependency cases
-        run: python samples/${{ matrix.suite }}/verify.py
+      - name: Run selected positive and negative dependency cases
+        env:
+          TEST_SELECTION: ${{ toJSON(matrix) }}
+        run: python scripts/ci/run.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: dependencies-${{ matrix.suite }}-${{ matrix.os }}
+          name: dependencies-${{ matrix.label }}-${{ matrix.os }}
           path: |
             samples/${{ matrix.suite }}/build/verification
             samples/${{ matrix.suite }}/build/**/config.pro
@@ -95,3 +115,22 @@ jobs:
             samples/${{ matrix.suite }}/build/**/*mapping*.txt
             samples/${{ matrix.suite }}/build/**/*usage*.txt
             samples/${{ matrix.suite }}/build/compose/logs
+  complete:
+    name: CI result
+    needs: [plan, verify, dependencies]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require all selected checks to pass
+        env:
+          PLAN_RESULT: ${{ needs.plan.result }}
+          CORE_RESULT: ${{ needs.verify.result }}
+          DEPENDENCIES_RESULT: ${{ needs.dependencies.result }}
+        run: |
+          test "$PLAN_RESULT" = success
+          for result in "$CORE_RESULT" "$DEPENDENCIES_RESULT"; do
+            case "$result" in
+              success|skipped) ;;
+              *) exit 1 ;;
+            esac
+          done

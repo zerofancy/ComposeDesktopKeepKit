@@ -30,3 +30,5 @@ if (providers.gradleProperty("keepKitNegative").orNull == "true") {
         )
     }
 }
+
+apply(from = "../ci-rule-inputs.gradle.kts")

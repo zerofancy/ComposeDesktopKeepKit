@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CI 按变更选择测试</title>
+<style>body{font:16px/1.75 system-ui,sans-serif;max-width:1060px;margin:36px auto;padding:24px;color:#203040}h1,h2{line-height:1.3}table{border-collapse:collapse;width:100%}th,td{border:1px solid #dbe3eb;padding:12px;text-align:left;vertical-align:top}code{overflow-wrap:anywhere}pre{background:#eef4fa;padding:16px;white-space:pre-wrap}a{color:#2563a6}</style>
+</head><body>
+<h1>CI 按变更选择测试</h1>
+<p>2026-10-17 · 固定的非 SNAPSHOT 依赖在相关输入未变时复用已有成功验证，不重复执行整个依赖矩阵。每次提交仍运行轻量选择器回归，所选运行测试继续覆盖 Linux、Windows、macOS。</p>
+<h2>执行范围</h2>
+<table><thead><tr><th>变化</th><th>执行范围</th></tr></thead><tbody>
+<tr><td>仅 README、Markdown、docs 下的文档</td><td>选择器回归与最终状态检查，不安装 JDK、不运行依赖 Release。</td></tr>
+<tr><td>单套 .pro 规则</td><td>核心规则校验、消费该规则的隔离正反例、传递依赖路径和相关综合场景。未受影响的库跳过。</td></tr>
+<tr><td>现有 catalog 坐标的版本或规则映射</td><td>合并变化前后的规则范围，包含删除的映射；新坐标、未知规则或 schema 变化执行全量，以建立新的覆盖基线。</td></tr>
+<tr><td>单个 fixture 的构建配置或验证器</td><td>该 fixture 的全部场景；有明确独立目录的 OSHI / DataStore / jsoup / 协程及规则回归源码，只选择对应场景。</td></tr>
+<tr><td>插件公共代码、Gradle/JDK 配置、CI、选择清单或未知输入</td><td>全量。仅 src/test 下的单元测试变化运行核心检查。</td></tr>
+<tr><td>SNAPSHOT、动态版本、changing 依赖；没有可信基线；API/历史解析失败</td><td>全量，避免错误跳过。</td></tr>
+</tbody></table>
+<h2>选择示例</h2>
+<table><thead><tr><th>规则</th><th>相关运行检查</th></tr></thead><tbody>
+<tr><td>jsoup.pro</td><td>KZAgent 的 jsoup 正例、警告反例、反射反例。</td></tr>
+<tr><td>datastore-preferences.pro</td><td>DataStore Preferences 的持久化正例与反射失败反例；不重跑 OSHI。</td></tr>
+<tr><td>jna.pro</td><td>JNA / Platform / JPMS 四组正反例、FileKit 传递路径、综合场景、OSHI 正反例及 JNA 缺陷回归。</td></tr>
+<tr><td>coil3.pro</td><td>Coil JVM 正反例及 KMP Release；不重跑其他隔离依赖。</td></tr>
+<tr><td>协程、序列化或 Okio 等共享规则</td><td>所有实际消费相关规则的场景。Compose 1.9 的基线本身也引入协程和序列化，因此这些变化可能影响较多测试。</td></tr>
+</tbody></table>
+<h2>可信基线与漏测保护</h2>
+<p>push 从同分支最近一次成功且属于当前提交历史的 CI 提交计算累计差异；不直接信任 push.before。失败、取消或尚未完成的测试不会推进成功基线，因此“改规则失败后只改文档”仍会重测此前未通过的规则。PR 从目标分支的成功祖先提交比较到当前合并提交，包含 PR 和目标分支尚未验证的累计变化。找不到这样的基线、发生历史改写或访问 API 出错时回退全量。</p>
+<p>Git diff 禁用重命名折叠，同时检查移动前后的路径。选择清单列出传递规则输入，Compose fixture 运行时复制实际生成的规则报告；若清单漏记了实际解析出的规则，验证直接失败。新增场景必须同步维护 <code>scripts/ci/coverage.py</code>，选择器回归检查场景名称与三个验证脚本的完整清单一致。</p>
+<p>每轮选择结果展示在 Actions job summary，并作为 <code>ci-selection</code> 产物保存；所选场景保留结果 JSON、收缩配置、mapping、usage 和日志。<code>CI result</code> 汇总选择器及所有所选任务，失败或取消不会被汇报为成功；无须运行的任务可以正常跳过。</p>
+<h2>手动全量与本地复现</h2>
+<p>Actions → CI → Run workflow 始终全量，适合发布前、运行环境更新后及需要主动复查时使用。现有的本地验证脚本不传筛选参数仍执行全部场景，不依赖 CI 成功缓存。</p>
+<pre>python3 -m unittest discover -s scripts/ci -p 'test_*.py' -v
+python3 scripts/ci/plan.py --base &lt;成功提交 SHA&gt;
+python3 scripts/ci/plan.py --full
+python3 samples/integrations/verify.py --only jna-positive jna-negative restored-positive
+python3 samples/floatclock-dependencies/verify.py --only oshi-positive oshi-negative
+python3 samples/kzagent-dependencies/verify.py --list-cases</pre>
+<p>本地 plan 的 head 默认为已提交的 HEAD；--base 应指向实际成功的提交。该入口用于检查计划，GitHub 上的自动基线通过工作流成功记录取得。</p>
+<h2>本轮验证</h2>
+<p>26 项选择器回归、工作流 actionlint 检查，以及 29 个实际规则输入配置核对已通过。筛选后的 JNA 正反例与综合场景（3 项）、OSHI 正反例（2 项）、jsoup 正反例（3 项）、D-Bus 回归（6 项）、Coil JVM 正反例和 KMP Release 均已通过；矩阵使用的同一执行入口也经过实际运行。日志位于 <code>build/ci-selection-validation/</code>。当前记录不声明修改后的工作流已在 GitHub 或 Windows/macOS 远端运行，也不对加速比例作未经实测的承诺。</p>
+<p><a href="../README.md">项目说明</a> · <a href="rule-regressions-validation.html">规则回归验证</a> · <a href="https://docs.github.com/en/rest/actions/workflow-runs">工作流成功基线 API</a> · <a href="https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax">工作流条件与矩阵语法</a></p>
+</body></html>

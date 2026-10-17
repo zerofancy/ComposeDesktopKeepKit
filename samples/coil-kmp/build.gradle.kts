@@ -24,3 +24,5 @@ compose.desktop.application {
         optimize.set(true)
     }
 }
+
+apply(from = "../ci-rule-inputs.gradle.kts")
