@@ -1,5 +1,7 @@
 # jsoup 1.22.2 optionally uses RE2/J and falls back to java.util.regex.
 # Adapted from META-INF/proguard/org.jsoup_jsoup.pro in the upstream JAR.
+# Warning suppression and reflection keeps have separate negative controls:
+# missing optional types fail shrinking; missing reflection targets fail at runtime.
 -dontwarn com.google.re2j.**
 # jsoup's compile-only JSpecify nullability annotations are not runtime APIs.
 -dontwarn org.jspecify.annotations.Nullable
