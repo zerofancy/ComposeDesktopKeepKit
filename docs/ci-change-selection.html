@@ -36,6 +36,12 @@ python3 samples/floatclock-dependencies/verify.py --only oshi-positive oshi-nega
 python3 samples/kzagent-dependencies/verify.py --list-cases</pre>
 <p>本地 plan 的 head 默认为已提交的 HEAD；--base 应指向实际成功的提交。该入口用于检查计划，GitHub 上的自动基线通过工作流成功记录取得。</p>
 <h2>本轮验证</h2>
-<p>26 项选择器回归、工作流 actionlint 检查，以及 29 个实际规则输入配置核对已通过。筛选后的 JNA 正反例与综合场景（3 项）、OSHI 正反例（2 项）、jsoup 正反例（3 项）、D-Bus 回归（6 项）、Coil JVM 正反例和 KMP Release 均已通过；矩阵使用的同一执行入口也经过实际运行。日志位于 <code>build/ci-selection-validation/</code>。当前记录不声明修改后的工作流已在 GitHub 或 Windows/macOS 远端运行，也不对加速比例作未经实测的承诺。</p>
+<p>26 项选择器回归、工作流 actionlint 检查，以及 29 个实际规则输入配置核对已通过。筛选后的 JNA 正反例与综合场景（3 项）、OSHI 正反例（2 项）、jsoup 正反例（3 项）、D-Bus 回归（6 项）、Coil JVM 正反例和 KMP Release 均已通过；矩阵使用的同一执行入口也经过实际运行。日志位于 <code>build/ci-selection-validation/</code>。远端实测与证据见下表；下载的选择清单和结果 JSON 保存在 <code>build/ci-selection-validation/remote/</code>。</p>
+<h2>远端实测：全量与定向选择</h2>
+<table><thead><tr><th>提交与变化</th><th>实际选择及结果</th><th>GitHub 总耗时</th></tr></thead><tbody>
+<tr><td><code>d2cd5f2</code>：CI、选择器及 fixture 配置变化</td><td><a href="https://github.com/zerofancy/ComposeDesktopKeepKit/actions/runs/39012040773">全量 CI 成功</a>。基线正确取自 <code>a00940b</code>，因工作流变化选择 18 个依赖任务及 3 个核心任务。三平台结果 JSON 均核对通过：integrations 39/39、rule-regressions 93/93、KZAgent 7/7、FloatClock 5/5；Coil 两组亦通过。</td><td>24 分 0 秒</td></tr>
+<tr><td><code>f2e1313</code>：仅澄清 jsoup 规则注释，ProGuard 指令不变</td><td><a href="https://github.com/zerofancy/ComposeDesktopKeepKit/actions/runs/39013584858">定向 CI 成功</a>。基线正确推进到 <code>d2cd5f2</code>，依赖矩阵仅 3 个任务，各平台仅执行 jsoup-positive、jsoup-warnings-negative、jsoup-reflection-negative；三个归档均确认恰好 3/3。其余依赖套件未生成任务；3 个核心任务通过。</td><td>2 分 19 秒</td></tr>
+</tbody></table>
+<p>两次都运行了选择器和最终状态汇总。全量基线的复用、关联场景筛选、传入验证器的 --only 参数及三平台运行结果均经远端实测。后续纯文档提交沿用这些已验证输入，应仅运行 plan 与 CI result；核心与依赖矩阵均跳过，具体选择可下载该提交的 ci-selection 产物核对。</p>
 <p><a href="../README.md">项目说明</a> · <a href="rule-regressions-validation.html">规则回归验证</a> · <a href="https://docs.github.com/en/rest/actions/workflow-runs">工作流成功基线 API</a> · <a href="https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax">工作流条件与矩阵语法</a></p>
 </body></html>

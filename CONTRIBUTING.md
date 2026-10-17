@@ -9,7 +9,7 @@
 5. 优先精确入口或框架接口，不全包 keep。兼容补丁应尽量保留 shrinking/obfuscation，只限制必要优化。警告规则注明可选引用依据。
 6. 不添加输入/输出 JAR、include、报告输出路径或全局关闭 shrinking/obfuscation/optimization 的规则。内置规则作为受审查的项目资源发布。
 7. 所有内置版本列表非空，规则文件必须存在且非空。规则引擎不访问远端，也不读取用户依赖 JAR 内的规则。
-8. 运行 `./gradlew check` 和两个 Coil Release 样例。规则变化在 README 与验证记录中更新。生命周期、反射、XML、注解保护的缺陷回归放在 `samples/rule-regressions`：用未收缩控制组证明场景合法，逐项移除对应规则，断言具体失败原因，不能只要求任意非零退出。正例须确认存在改名以及故意未使用的类被裁剪。
+8. 运行 `./gradlew check` 与受影响依赖的 Release 正反例；公共输入变化或影响范围不明时运行全量。规则变化在 README 与验证记录中更新。生命周期、反射、XML、注解保护的缺陷回归放在 `samples/rule-regressions`：用未收缩控制组证明场景合法，逐项移除对应规则，断言具体失败原因，不能只要求任意非零退出。正例须确认存在改名以及故意未使用的类被裁剪。
 9. CI 按变更选择，并在三个平台执行 `integrations`、`kzagent-dependencies`、`floatclock-dependencies` 和 `rule-regressions` 验证脚本。新增场景应进入对应脚本；平台专用路径必须在受支持的平台实际调用，其他平台的通用检查仍然运行。保留日志、mapping 和 usage 供定位失败；部分重跑不得复用上次的成功结果。维护 `scripts/ci/coverage.py` 中的规则、传递依赖与场景关联；新增坐标、未知输入或公共代码变化回退全量，固定依赖的规则变化只运行相关正反例和综合场景。实际生成报告中的规则必须包含在选择清单内，否则验证失败。选择器本身的回归通过 `python3 -m unittest discover -s scripts/ci -p 'test_*.py' -v` 运行；Actions 的手动入口始终执行全量。选择策略见 [CI 按变更选择测试](docs/ci-change-selection.html)。
 
 公开仓库贡献不应包含本机路径、密钥或消费项目的业务代码。
