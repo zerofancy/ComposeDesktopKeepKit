@@ -297,6 +297,137 @@
           "source": "https://github.com/oshi/oshi/tree/oshi-parent-6.6.5/oshi-core/src/main/java/oshi"
         }
       ]
+    },
+    {
+      "dependency": "com.risaboss:bossterm-compose-desktop",
+      "versions": [
+        {
+          "version": "1.2.183",
+          "rules": [
+            "bossterm.pro"
+          ],
+          "source": "https://repo.maven.apache.org/maven2/com/risaboss/bossterm-compose-desktop/1.2.183/"
+        }
+      ],
+      "exactOnly": true
+    },
+    {
+      "dependency": "io.github.oshai:kotlin-logging-jvm",
+      "versions": [
+        {
+          "version": "8.0.4",
+          "rules": [
+            "kotlin-logging.pro"
+          ],
+          "source": "https://repo.maven.apache.org/maven2/io/github/oshai/kotlin-logging-jvm/8.0.4/"
+        }
+      ]
+    },
+    {
+      "dependency": "io.ktor:ktor-server-routing-openapi-jvm",
+      "versions": [
+        {
+          "version": "3.6.0",
+          "rules": [
+            "ktor-openapi.pro"
+          ],
+          "source": "https://repo.maven.apache.org/maven2/io/ktor/ktor-server-routing-openapi-jvm/3.6.0/"
+        }
+      ]
+    },
+    {
+      "dependency": "io.modelcontextprotocol.sdk:mcp-core",
+      "versions": [
+        {
+          "version": "2.1.0",
+          "rules": [
+            "mcp-core.pro"
+          ],
+          "source": "https://repo.maven.apache.org/maven2/io/modelcontextprotocol/sdk/mcp-core/2.1.0/"
+        }
+      ]
+    },
+    {
+      "dependency": "io.modelcontextprotocol.sdk:mcp-json-jackson3",
+      "versions": [
+        {
+          "version": "2.1.0",
+          "rules": [
+            "mcp-jackson3.pro"
+          ],
+          "source": "https://repo.maven.apache.org/maven2/io/modelcontextprotocol/sdk/mcp-json-jackson3/2.1.0/"
+        }
+      ]
+    },
+    {
+      "dependency": "tools.jackson.core:jackson-databind",
+      "versions": [
+        {
+          "version": "3.1.4",
+          "rules": [
+            "jackson3-databind.pro"
+          ],
+          "source": "https://repo.maven.apache.org/maven2/tools/jackson/core/jackson-databind/3.1.4/"
+        }
+      ]
+    },
+    {
+      "dependency": "com.fasterxml.jackson.core:jackson-annotations",
+      "versions": [
+        {
+          "version": "2.21",
+          "rules": [
+            "jackson-annotations.pro"
+          ],
+          "source": "https://repo.maven.apache.org/maven2/com/fasterxml/jackson/core/jackson-annotations/2.21/"
+        }
+      ]
+    },
+    {
+      "dependency": "com.networknt:json-schema-validator",
+      "versions": [
+        {
+          "version": "3.0.6",
+          "rules": [
+            "networknt-schema.pro"
+          ],
+          "source": "https://repo.maven.apache.org/maven2/com/networknt/json-schema-validator/3.0.6/"
+        }
+      ]
+    },
+    {
+      "dependency": "io.projectreactor:reactor-core",
+      "versions": [
+        {
+          "version": "3.7.0",
+          "rules": [
+            "reactor.pro"
+          ],
+          "source": "https://repo.maven.apache.org/maven2/io/projectreactor/reactor-core/3.7.0/"
+        }
+      ]
+    },
+    {
+      "dependency": "org.jetbrains.kotlinx:kotlinx-coroutines-reactor",
+      "versions": [
+        {
+          "version": "1.11.0",
+          "rules": [
+            "coroutines-reactor.pro"
+          ],
+          "source": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlinx/kotlinx-coroutines-reactor/1.11.0/"
+        }
+      ]
+    },
+    {
+      "dependency": "dev.whyoleg.cryptography:cryptography-provider-jdk-jvm",
+      "versions": [
+        {
+          "version": "0.6.0",
+          "rules": ["cryptography-jdk.pro"],
+          "source": "https://repo.maven.apache.org/maven2/dev/whyoleg/cryptography/cryptography-provider-jdk-jvm/0.6.0/"
+        }
+      ]
     }
   ]
 }

@@ -49,6 +49,11 @@ class SelectionTests(unittest.TestCase):
         self.assertEqual({"kzagent-dependencies"}, set(tests))
         self.assertEqual(set(KZAGENT_CASES["coroutines-swing"]), set(tests["kzagent-dependencies"]["cases"]))
 
+    def test_mcp_transitive_rules_select_isolated_and_mapper_cases(self):
+        tests = tests_by_suite(select([RULE_DIR + "jackson3-databind.pro"]))
+        self.assertEqual({"release-jackson3-databind", "release-mcp-jackson3", "release-networknt-schema"},
+                         set(tests["kzagent-dependencies"]["cases"]))
+
     def test_jsoup_is_isolated(self):
         tests = tests_by_suite(select([RULE_DIR + "jsoup.pro"]))
         self.assertEqual({"kzagent-dependencies"}, set(tests))
@@ -141,6 +146,9 @@ class SelectionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             shutil.copytree(ROOT / "scripts/ci", root / "scripts/ci", ignore=shutil.ignore_patterns("__pycache__"))
+            release = Path("samples/kzagent-dependencies/release-rules/cases.json")
+            (root / release).parent.mkdir(parents=True)
+            shutil.copyfile(ROOT / release, root / release)
             for suite in ("integrations", "floatclock-dependencies", "kzagent-dependencies"):
                 sample = root / "samples" / suite
                 path = sample / "build/verification/results.json"

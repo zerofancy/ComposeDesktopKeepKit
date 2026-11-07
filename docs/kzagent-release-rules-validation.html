@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MCP 与 BossTerm 的 Release 规则验证</title>
+<style>
+  body { max-width: 1050px; margin: 2rem auto; padding: 0 1rem; font: 16px/1.65 system-ui, sans-serif; color: #172738; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: .65rem; text-align: left; vertical-align: top; border: 1px solid #d7e0ea; }
+  th { background: #eef4fa; }
+  code { overflow-wrap: anywhere; }
+  pre { padding: .75rem; background: #eef4fa; overflow: auto; }
+  a { color: #205eaa; }
+</style>
+</head>
+<body>
+<h1>MCP 与 BossTerm 的 Release 规则验证</h1>
+<p>2026-11-07 · Linux x86_64 · 开发版</p>
+<h2>依赖隔离</h2>
+<p>11 个新增依赖共通过 55 项检查，包括 11 项未处理对照、11 项 Release 正例及 33 项逐条移除反例。KZAgent 既有的 7 项依赖检查也通过。</p>
+<p>固定 Gradle 8.14.3、JDK 21 和 ProGuard 7.8.0。每个场景以一个规则所属依赖为入口，正常解析传递依赖。kotlin-logging 场景选择 SLF4J facade，coroutines-reactor 场景约束 Reactor 到 KZAgent 实际解析的 3.7.0。未处理的 JAR 用于确认测试本身能运行。Release 正例启用裁剪、优化和混淆，并确认一个探针类被改名、一个未使用类被裁剪。BossTerm 隔离测试只处理真实渲染类及其内部类，其他依赖以库类路径提供。每个反例只移除对应的规则，区分 ProGuard 警告导致的构建失败与产物运行时失败。</p>
+<table>
+<thead><tr><th>规则所属依赖</th><th>正例</th><th>反例</th></tr></thead>
+<tbody>
+<tr><td>MCP core 2.1.0</td><td>读取协议 record 的构造入口和注解、解析 TypeRef 泛型、读取协议枚举。</td><td>分别观察缺失 Servlet 引用、record 成员或注解缺失、泛型信息丢失、枚举常量不可读。</td></tr>
+<tr><td>MCP Jackson 3 adapter 2.1.0</td><td>从服务描述符加载 mapper 和 validator，解析带 discriminator 的内容项及协议枚举，检查 schema 的接受与拒绝。</td><td>分别移除服务接口名称或 provider 入口，观察服务发现失败。另测 record 的静态反序列化入口、枚举字段注解和枚举工厂。</td></tr>
+<tr><td>Jackson Databind 3.1.4 和 Jackson Annotations 2.21</td><td>创建 mapper 并读 JSON，读取注解枚举常量。</td><td>移除对应规则后，分别出现 <code>MethodHandle.invokeExact</code> 警告或反射枚举常量缺失。</td></tr>
+<tr><td>networknt 3.0.6</td><td>用 JDK 正则引擎验证有效与无效 JSON 字符串。</td><td>分别恢复 Joni、GraalJS 的可选引用警告，或触发 schema 版本 <code>EnumSet</code> 初始化错误。</td></tr>
+<tr><td>Reactor 3.7.0</td><td>用 scheduler 消费异步信号，并验证单值和多播 sink 向已订阅的消费者交付结果。</td><td>分别观察可选 SLF4J、JSR-305、Micrometer、BlockHound 与旧 JDK tracing 引用。移除字段更新器所属类的 volatile 保护后，混淆版的更新器因找不到订阅者字段而无法初始化。</td></tr>
+<tr><td>Coroutines Reactor 1.11.0</td><td>将协程上下文桥接到 Reactor publisher。</td><td>移除 SPI 接口名称或 provider 后，观察上下文丢失或服务发现失败。</td></tr>
+<tr><td>kotlin-logging 8.0.4、Ktor routing OpenAPI 3.6.0、cryptography JDK 0.6.0</td><td>创建 SLF4J logger、访问 OpenAPI registry、使用 JDK provider 计算 SHA-256。</td><td>分别观察可选 Logback、协程 MDC、native-image、JWT provider 或 Bouncy Castle 桥接引用。</td></tr>
+<tr><td>BossTerm Desktop 1.2.183</td><td>让 JVM 验证终端渲染类的方法。</td><td>移除 <code>-keep,includecode</code> 后检查 <code>ProperTerminalKt</code> 的栈帧。该 workaround 仅匹配 1.2.183。</td></tr>
+</tbody>
+</table>
+<h2>KZAgent 对照</h2>
+<p>使用 KZAgent 的 Gradle 9.7.1、Compose 1.12.1、ProGuard 7.8.0 及打包 JDK 21。用 Gradle 8.14.3 本地发布 KeepKit 开发产物，再从临时 KZAgent 副本消费。Compose 继续使用应用现有的裁剪和优化设置，以及关闭混淆的配置。</p>
+<table>
+<thead><tr><th>应用侧文件</th><th>迁移范围</th></tr></thead>
+<tbody>
+<tr><td><code>mcp-dependencies.pro</code></td><td>移除整份文件。SDK 的 record、泛型和 SPI，以及传递库规则均由 KeepKit 注入。Reactor 的 volatile 保护缩小到声明 <code>Atomic*FieldUpdater</code> 的类。全移除时，KZAgent 的 stdio 初始化停在 <code>SinkOneMulticast.tryEmitValue</code>，反汇编显示 CAS 的旧值被折叠为 <code>null</code>。只保护该单值 sink 时，HTTP 初始化仍在多播 sink 的订阅路径失败。</td></tr>
+<tr><td><code>terminal-dependencies.pro</code></td><td>移除整份文件。BossTerm 的方法体保护和可选引用警告由 KeepKit 处理。<code>LibC.getsid</code> 由 JNA 的通用 Library 规则覆盖，Linux PTY shell 路径无需 PTY4J 全包 keep。</td></tr>
+<tr><td><code>jna-dependencies.pro</code></td><td>移除整份文件。<code>Native.finalizer</code> 已由 v0.2.5 加入 KeepKit。</td></tr>
+<tr><td><code>compose-fluent.pro</code></td><td>保留。Fluent/Haze 旧 Compose ABI 的警告抑制依赖应用的主题兼容处理。</td></tr>
+</tbody>
+</table>
+<p>覆盖范围包括 Linux Release 字节码验证、PTY shell 与 <code>getsid</code>、JNA 的 GC 生命周期和 MCP 工具发现与调用。MCP 覆盖本地 stdio 以及 Streamable HTTP 的 JSON 和 SSE 响应。Windows PTY、macOS AppKit 回调和桌面人工操作需在对应平台补验。此记录不改变 KZAgent 的工作树或公开发布版本。</p>
+<h2>复跑</h2>
+<pre><code>./gradlew check
+python3 -m unittest discover -s scripts/ci -p 'test_*.py' -v
+python3 samples/kzagent-dependencies/verify.py
+python3 samples/kzagent-dependencies/verify.py --only release-mcp-jackson3 release-bossterm</code></pre>
+<p>对照配置、逐项运行日志、mapping 和 usage 位于测试项目的 <code>build/verification/release-rules</code>。CI 的依赖检查按规则及传递依赖选择场景。</p>
+</body>
+</html>

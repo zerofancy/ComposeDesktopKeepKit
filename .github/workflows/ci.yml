@@ -110,6 +110,7 @@ jobs:
           name: dependencies-${{ matrix.label }}-${{ matrix.os }}
           path: |
             samples/${{ matrix.suite }}/build/verification
+            !samples/${{ matrix.suite }}/build/verification/release-rules/**/*.jar
             samples/${{ matrix.suite }}/build/**/config.pro
             samples/${{ matrix.suite }}/build/**/rules.pro
             samples/${{ matrix.suite }}/build/**/*mapping*.txt

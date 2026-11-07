@@ -23,7 +23,9 @@ cases += [(scenario + "-negative", scenario, ["-Pnegative=true"], "verifySmoke")
           ("coroutines-core", "coroutines-swing")]
 cases += [("jsoup-warnings-negative", "jsoup", ["-Pnegative=true"], "shrinkSmoke"),
           ("jsoup-reflection-negative", "jsoup", ["-Pnegative=true", "-PwarningsOnly=true"], "verifySmoke")]
-known = {case[0] for case in cases}
+release_suite = sample / "release-rules"
+release_cases = json.loads((release_suite / "cases.json").read_text(encoding="utf-8"))
+known = {case[0] for case in cases} | {"release-" + name for name in release_cases}
 if arguments.list_cases:
     print(json.dumps(sorted(known)))
     raise SystemExit(0)
@@ -58,4 +60,8 @@ for name, scenario, properties, failure_stage in cases:
     (output / "results.json").write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8")
     print(f"{'PASS' if passed else 'FAIL'} {name}", flush=True)
 (output / "results.json").write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8")
-raise SystemExit(0 if all(result["passed"] for result in results) else 1)
+selected_release = [name for name in release_cases if not arguments.only or "release-" + name in arguments.only]
+release_passed = not selected_release or subprocess.run(
+    [sys.executable, str(release_suite / "verify.py"), *selected_release], cwd=wrapper.parent
+).returncode == 0
+raise SystemExit(0 if release_passed and all(result["passed"] for result in results) else 1)

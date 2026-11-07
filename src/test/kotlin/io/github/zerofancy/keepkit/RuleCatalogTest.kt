@@ -4,6 +4,17 @@ import org.junit.jupiter.api.Test
 import kotlin.test.*
 
 class RuleCatalogTest {
+    @Test fun `BossTerm bytecode workaround only matches the affected version`() {
+        val catalog = RuleCatalog.load()
+        val coordinate = "com.risaboss:bossterm-compose-desktop"
+        val exact = catalog.generate(listOf("$coordinate:1.2.183"), emptySet())
+        assertEquals(listOf("bossterm.pro"), exact.report.applications.single().rules)
+        assertContains(exact.rules, "-keep,includecode class ai.rever.bossterm.compose.ui.ProperTerminalKt")
+        val other = catalog.generate(listOf("$coordinate:1.2.182", "$coordinate:1.2.184"), emptySet())
+        assertTrue(other.report.applications.isEmpty())
+        assertEquals("", other.rules)
+    }
+
     @Test fun `FloatClock adapters preserve protobuf fields and WMI enum reflection without whole package keeps`() {
         val catalog = RuleCatalog.load()
         val modules = listOf(

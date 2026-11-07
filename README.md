@@ -95,6 +95,23 @@ keepKit {
 | `com.github.oshi:oshi-core` | 6.6.5 | 保留 WMI / PDH / Linux proc 枚举的反射 `values()` 入口；原生访问复用传递 JNA 规则 |
 | `org.jsoup:jsoup` | 1.22.2 | 可选 RE2/J / JSpecify 引用、Java 11 HTTP 反射构造入口及请求方法枚举 |
 
+开发版新增以下规则。已发布的 `v0.2.5` 不包含这批条目。
+
+| 依赖坐标 | 规则版本 | 用途 |
+| --- | --- | --- |
+| `com.risaboss:bossterm-compose-desktop` | 1.2.183（仅精确匹配） | 保留 `ProperTerminalKt` 方法体，避免优化后的无效栈帧 |
+| `io.github.oshai:kotlin-logging-jvm` | 8.0.4 | 可选 Logback、协程 MDC 和 GraalVM 集成 |
+| `io.ktor:ktor-server-routing-openapi-jvm` | 3.6.0 | 可选 JWT provider |
+| `dev.whyoleg.cryptography:cryptography-provider-jdk-jvm` | 0.6.0 | 可选 Bouncy Castle 桥接 |
+| `io.modelcontextprotocol.sdk:mcp-core` | 2.1.0 | 协议 record、枚举、泛型签名及可选 Servlet transport |
+| `io.modelcontextprotocol.sdk:mcp-json-jackson3` | 2.1.0 | JSON mapper 和 schema validator 的 SPI |
+| `tools.jackson.core:jackson-databind` / `com.fasterxml.jackson.core:jackson-annotations` | 3.1.4 / 2.21 | 保留反射所需的枚举常量入口，抑制 ProGuard 对签名多态调用的警告 |
+| `com.networknt:json-schema-validator` | 3.0.6 | 保留 schema 版本枚举及可选 Joni / GraalJS 正则引擎 |
+| `io.projectreactor:reactor-core` | 3.7.0 | 保护反射字段更新器使用的 volatile 状态及可选日志、监控、BlockHound、JSR-305 和旧 JDK tracing |
+| `org.jetbrains.kotlinx:kotlinx-coroutines-reactor` | 1.11.0 | Reactor context bridge 的 SPI |
+
+逐项移除规则的 Release 对照及 KZAgent 迁移结果见 [MCP 与 BossTerm 验证](docs/kzagent-release-rules-validation.html)。
+
 `v0.2.4` 新增 DataStore / OSHI 支持。FloatClock 使用的 DataStore 1.1.7 与 OSHI 6.6.5 的 Release 正反例见 [FloatClock 依赖验证](docs/floatclock-dependencies-validation.html)。DataStore core / core-okio 不添加无必要的全包 keep；独立 Okio 存储读写通过现有传递依赖规则验证。
 
 `v0.2.3` 新增以上 Coroutines / jsoup 支持。依赖审计和独立收缩正反例见 [KZAgent 依赖验证](docs/kzagent-dependencies-validation.html)。Coil 3.5.0 和 Okio 3.17.0 已能回退到现有规则；序列化应以最终解析版本为准。Compose Fluent / Haze 与特定 Compose 版本之间的二进制兼容警告，不作为通用 keep 规则自动屏蔽。
@@ -105,7 +122,7 @@ JNA 直接映射的 Java `native` 方法按 JNI 角色保留名称，`Native.reg
 
 本插件不扫描 XML。Logback 规则覆盖 Appender、Encoder、Layout、Filter、RollingPolicy、TriggeringPolicy、StatusListener 和 Converter 的构造入口，以及 ContextAware 组件的 JavaBean 属性；XML 中其他任意类型、反射访问的业务类仍需要应用自行配置。规则范围及运行边界见 [新增依赖验证记录](docs/integrations-validation.html)。
 
-同一坐标只选一个规则版本：优先选择 **不高于实际版本的最高版本**；若没有，则选择 **高于实际版本的最低版本**。采用 Maven `ComparableVersion` 3.9.9，包含数字段和预发布排序；不设置版本区间，也不阻断跨主版本回退。版本回退不代表所有版本都经过运行验证。
+同一坐标只选一个规则版本，通常优先选择 **不高于实际版本的最高版本**，若没有则选择 **高于实际版本的最低版本**。采用 Maven `ComparableVersion` 3.9.9，包含数字段和预发布排序。标记为仅精确匹配的条目只在匹配已知版本时应用，例如 BossTerm 的字节码 workaround。其余条目允许跨主版本回退，回退不代表已经过运行验证。
 
 每次 Release 构建都会打印应用日志，生成任务命中缓存时也会打印：
 

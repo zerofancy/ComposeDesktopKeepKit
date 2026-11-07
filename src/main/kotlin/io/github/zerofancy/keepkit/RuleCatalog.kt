@@ -4,7 +4,9 @@ import com.google.gson.GsonBuilder
 import org.apache.maven.artifact.versioning.ComparableVersion
 
 internal data class RuleVersion(val version: String, val rules: List<String>, val source: String)
-internal data class DependencyRules(val dependency: String, val versions: List<RuleVersion>)
+internal data class DependencyRules(
+    val dependency: String, val versions: List<RuleVersion>, val exactOnly: Boolean = false
+)
 internal data class CatalogDocument(val schemaVersion: Int, val dependencies: List<DependencyRules>)
 internal data class ApplicationRecord(
     val dependency: String, val actualVersion: String, val ruleVersion: String?,
@@ -49,7 +51,11 @@ internal class RuleCatalog(private val document: CatalogDocument, private val re
             }
             val actual = ComparableVersion(parts[2])
             val sorted = entry.versions.sortedWith(compareBy { ComparableVersion(it.version) })
-            val selected = sorted.lastOrNull { ComparableVersion(it.version) <= actual } ?: sorted.first()
+            val selected = if (entry.exactOnly) {
+                sorted.firstOrNull { ComparableVersion(it.version) == actual } ?: return@forEach
+            } else {
+                sorted.lastOrNull { ComparableVersion(it.version) <= actual } ?: sorted.first()
+            }
             val comparison = ComparableVersion(selected.version).compareTo(actual)
             val selection = when { comparison == 0 -> "exact"; comparison < 0 -> "lower"; else -> "higher" }
             records += ApplicationRecord(coordinate, parts[2], selected.version, selection, selected.rules.sorted(), selected.source)

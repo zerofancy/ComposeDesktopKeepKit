@@ -1,0 +1,112 @@
+{
+  "mcp-core": {
+    "dependency": "io.modelcontextprotocol.sdk:mcp-core:2.1.0",
+    "fragments": ["mcp-core.pro", "reactor.pro", "slf4j2.pro"],
+    "probes": ["records", "type", "enum"],
+    "omissions": {
+      "servlet": {"rules": ["-dontwarn io.modelcontextprotocol.server.transport.HttpServlet"], "build": "jakarta.servlet"},
+      "records": {"rules": ["-keep class io.modelcontextprotocol.spec.McpSchema"], "probe": "records", "error": "MCP canonical constructor missing|MCP record"},
+      "metadata": {"rules": ["-keepattributes RuntimeVisibleAnnotations"], "probe": "records", "error": "MCP constructor wire annotations missing|MCP record"},
+      "typeref": {"rules": ["-keepattributes Signature"], "probe": "type", "error": "actual type information|MCP generic type missing"},
+      "enum": {"rules": ["-keepclassmembers enum io.modelcontextprotocol.spec.McpSchema"], "probe": "enum", "error": "getEnumConstants|MCP role constants missing"}
+    }
+  },
+  "mcp-jackson3": {
+    "dependency": "io.modelcontextprotocol.sdk:mcp-json-jackson3:2.1.0",
+    "fragments": ["mcp-core.pro", "mcp-jackson3.pro", "jackson3-databind.pro", "jackson-annotations.pro", "networknt-schema.pro", "reactor.pro", "slf4j2.pro"],
+    "probes": ["mapper", "validator", "enum"],
+    "omissions": {
+      "mapper-service-name": {"rules": ["-keepnames interface io.modelcontextprotocol.json.McpJsonMapperSupplier"], "probe": "mapper", "error": "ServiceConfigurationError: No .* available"},
+      "mapper-provider": {"rules": ["-keep class io.modelcontextprotocol.json.jackson3.JacksonMcpJsonMapperSupplier"], "probe": "mapper", "error": "ServiceConfigurationError:.*(No .* available|Provider .* not found)"},
+      "validator-service-name": {"rules": ["-keepnames interface io.modelcontextprotocol.json.schema.JsonSchemaValidatorSupplier"], "probe": "validator", "error": "ServiceConfigurationError: No .* available"},
+      "validator-provider": {"rules": ["-keep class io.modelcontextprotocol.json.schema.jackson3.JacksonJsonSchemaValidatorSupplier"], "probe": "validator", "error": "ServiceConfigurationError:.*(No .* available|Provider .* not found)"},
+      "record-creator": {"rules": ["    @com.fasterxml.jackson.annotation.JsonCreator <methods>;"], "probe": "mapper", "error": "content must not be null|MCP default content missing"},
+      "enum-wire-name": {"rules": ["    @com.fasterxml.jackson.annotation.JsonProperty <fields>;"], "probe": "enum", "error": "from String \"user\": not one of the values accepted|MCP enum wire name"},
+      "enum-creator": {"rules": ["    @com.fasterxml.jackson.annotation.JsonCreator public static <methods>;"], "probe": "enum", "error": "from String \"futureReason\": not one of the values accepted|MCP enum creator missing"}
+    }
+  },
+  "jackson3-databind": {
+    "dependency": "tools.jackson.core:jackson-databind:3.1.4",
+    "fragments": ["jackson3-databind.pro", "jackson-annotations.pro"],
+    "probes": ["mapper"],
+    "omissions": {
+      "invoke-exact": {"rules": ["-dontwarn tools.jackson.databind"], "build": "invokeExact"},
+      "enums": {"rules": ["-keepclassmembers enum tools.jackson.databind"], "probe": "mapper", "error": "getEnumConstants"}
+    }
+  },
+  "jackson-annotations": {
+    "dependency": "com.fasterxml.jackson.core:jackson-annotations:2.21",
+    "fragments": ["jackson-annotations.pro"],
+    "probes": ["enum"],
+    "omissions": {
+      "enums": {"rules": ["-keepclassmembers enum com.fasterxml.jackson.annotation"], "probe": "enum", "error": "getEnumConstants|Jackson annotation enum missing"}
+    }
+  },
+  "networknt-schema": {
+    "dependency": "com.networknt:json-schema-validator:3.0.6",
+    "fragments": ["networknt-schema.pro", "jackson3-databind.pro", "jackson-annotations.pro", "slf4j2.pro"],
+    "probes": ["regex"],
+    "omissions": {
+      "joni": {"rules": ["-dontwarn com.networknt.schema.regex.JoniRegularExpression"], "build": "org.joni|org.jcodings"},
+      "graal": {"rules": ["-dontwarn com.networknt.schema.regex.GraalJS"], "build": "org.graalvm.polyglot"},
+      "enum": {"rules": ["-keepclassmembers enum com.networknt.schema.SpecificationVersion"], "probe": "regex", "error": "not an enum|EnumSet"}
+    }
+  },
+  "reactor": {
+    "dependency": "io.projectreactor:reactor-core:3.7.0",
+    "fragments": ["reactor.pro"],
+    "probes": ["scheduler", "one-sink", "multicast"],
+    "omissions": {
+      "slf4j-fallback": {"rules": ["-dontwarn reactor.util.Loggers"], "build": "org.slf4j"},
+      "jsr305": {"rules": ["-dontwarn reactor.util.annotation"], "build": "javax.annotation"},
+      "micrometer": {"rules": ["-dontwarn io.micrometer"], "build": "io.micrometer"},
+      "blockhound": {"rules": ["-dontwarn reactor.blockhound"], "build": "reactor.blockhound"},
+      "legacy-stack": {"rules": ["-dontwarn reactor.core.publisher.CallSiteSupplierFactory"], "build": "sun.misc.SharedSecrets|sun.misc.JavaLangAccess"},
+      "one-sink-updater": {"rules": ["-if class reactor.", "-keepclassmembers class reactor."], "probe": "one-sink", "error": "NoSuchFieldException: subscribers|TimeoutException"},
+      "multicast-updater": {"rules": ["-if class reactor.", "-keepclassmembers class reactor."], "probe": "multicast", "error": "NoSuchFieldException: (subscribers|upstreamDisposable|wip|s)|TimeoutException"}
+    }
+  },
+  "coroutines-reactor": {
+    "dependency": "org.jetbrains.kotlinx:kotlinx-coroutines-reactor:1.11.0",
+    "fragments": ["coroutines-reactor.pro", "coroutines.pro", "reactor.pro"],
+    "probes": ["context"],
+    "omissions": {
+      "context-service-name": {"rules": ["-keepnames interface kotlinx.coroutines.reactive.ContextInjector"], "probe": "context", "error": "Reactor context was not injected"},
+      "context-provider": {"rules": ["-keep class kotlinx.coroutines.reactor.ReactorContextInjector"], "probe": "context", "error": "ServiceConfigurationError|Reactor context was not injected"}
+    }
+  },
+  "kotlin-logging": {
+    "dependency": "io.github.oshai:kotlin-logging-jvm:8.0.4",
+    "fragments": ["kotlin-logging.pro", "slf4j2.pro"],
+    "probes": ["logger"],
+    "omissions": {
+      "mdc": {"rules": ["-dontwarn io.github.oshai.kotlinlogging.coroutines"], "build": "kotlinx.coroutines.slf4j.MDCContext"},
+      "logback": {"rules": ["-dontwarn io.github.oshai.kotlinlogging.logback"], "build": "ch.qos.logback"},
+      "native-image": {"rules": ["-dontwarn com.oracle.svm"], "build": "com.oracle.svm.core.annotate"}
+    }
+  },
+  "ktor-openapi": {
+    "dependency": "io.ktor:ktor-server-routing-openapi-jvm:3.6.0",
+    "fragments": ["ktor-openapi.pro", "serialization.pro", "coroutines.pro", "slf4j2.pro"],
+    "probes": ["annotation"],
+    "omissions": {
+      "jwt": {"rules": ["-dontwarn io.ktor.server.auth.jwt.JWTAuthenticationProvider"], "build": "JWTAuthenticationProvider"}
+    }
+  },
+  "cryptography-jdk": {
+    "dependency": "dev.whyoleg.cryptography:cryptography-provider-jdk-jvm:0.6.0",
+    "fragments": ["cryptography-jdk.pro"],
+    "probes": ["sha256"],
+    "omissions": {
+      "bouncycastle": {"rules": ["-dontwarn dev.whyoleg.cryptography.providers.jdk.internal.BouncyCastleBridge"], "build": "org.bouncycastle"}
+    }
+  },
+  "bossterm": {
+    "dependency": "com.risaboss:bossterm-compose-desktop:1.2.183",
+    "fragments": ["bossterm.pro"],
+    "probes": ["renderer"],
+    "omissions": {
+      "code": {"rules": ["-keep,includecode class ai.rever.bossterm.compose.ui.ProperTerminalKt"], "probe": "renderer", "error": "VerifyError: Inconsistent stackmap frames"}
+    }
+  }
+}

@@ -3,6 +3,9 @@
 Unknown rules/paths select the full matrix. Keep this inventory with the fixtures;
 changes to this file themselves require a full run before a new baseline is trusted.
 """
+import json
+from pathlib import Path
+
 COROUTINES = {"coroutines.pro", "coroutines-swing.pro"}
 # The pinned Compose 1.9 fixtures resolve core coroutines and serialization;
 # Compose 1.8 (FloatClock) resolves core coroutines without serialization.
@@ -59,6 +62,11 @@ KZAGENT = {"coroutines-core": {"coroutines.pro"},
 KZAGENT_CASES = {"coroutines-core": pairs("coroutines-core"),
                  "coroutines-swing": pairs("coroutines-swing"),
                  "jsoup": ["jsoup-positive", "jsoup-warnings-negative", "jsoup-reflection-negative"]}
+_release_cases = Path(__file__).resolve().parents[2] / "samples/kzagent-dependencies/release-rules/cases.json"
+for scenario, case in json.loads(_release_cases.read_text(encoding="utf-8")).items():
+    name = "release-" + scenario
+    KZAGENT[name] = set(case["fragments"])
+    KZAGENT_CASES[name] = [name]
 REGRESSIONS = {"jna": {"jna.pro"}, "logback": LOGGING, "dbus": {"dbus.pro", "slf4j2.pro"}}
 COIL = COMPOSE | {"coil3.pro", "okhttp4.pro", "okio3.pro"}
 
