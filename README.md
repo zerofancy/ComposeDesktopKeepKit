@@ -35,13 +35,13 @@ pluginManagement {
 ```kotlin
 plugins {
     id("org.jetbrains.compose") // 沿用项目原有版本
-    id("io.github.zerofancy.compose-desktop-keep-kit") version "v0.2.5"
+    id("io.github.zerofancy.compose-desktop-keep-kit") version "v0.2.6"
 }
 ```
 
 版本包含 Git 标签的 `v` 前缀。使用 `useModule` 直接解析实现模块，不依赖 JitPack 上的 Gradle plugin marker。以上是一次性的仓库接入设置，keep 规则不需要配置。
 
-`v0.2.5` 已发布到 JitPack，产物核对、远端 Release 消费和配置缓存复用验证通过，详见 [v0.2.5 发布验证](docs/jitpack-v025-validation.html)。
+`v0.2.6` 已发布到 JitPack，三平台 CI、产物核对、远端 Release 消费和配置缓存复用验证通过。详见 [v0.2.6 发布验证](docs/jitpack-v026-validation.html)。历史记录见 [v0.2.5 发布验证](docs/jitpack-v025-validation.html)。
 
 `v0.2.4` 的历史发布验证：发布 JAR 规则核对、DataStore / OSHI 独立 Release 正反例、远端 PNG/SVG 加载和配置缓存复用均通过，详见 [v0.2.4 发布验证](docs/jitpack-v024-validation.html)。历史发布记录：[v0.2.3 发布验证](docs/jitpack-v023-validation.html)、[v0.2.2 发布验证](docs/jitpack-v022-validation.html)、[v0.2.1 发布验证](docs/jitpack-v021-validation.html)、[v0.2.0 发布验证](docs/jitpack-v020-validation.html)、[v0.1.1 发布验证](docs/jitpack-validation.html)。首次请求可能需要等待 JitPack 构建；可在 [JitPack 项目页](https://jitpack.io/#zerofancy/ComposeDesktopKeepKit) 查看状态。尚未发布到 Gradle Plugin Portal / Maven Central。
 
@@ -95,7 +95,7 @@ keepKit {
 | `com.github.oshi:oshi-core` | 6.6.5 | 保留 WMI / PDH / Linux proc 枚举的反射 `values()` 入口；原生访问复用传递 JNA 规则 |
 | `org.jsoup:jsoup` | 1.22.2 | 可选 RE2/J / JSpecify 引用、Java 11 HTTP 反射构造入口及请求方法枚举 |
 
-开发版新增以下规则。已发布的 `v0.2.5` 不包含这批条目。
+`v0.2.6` 新增以下规则。
 
 | 依赖坐标 | 规则版本 | 用途 |
 | --- | --- | --- |

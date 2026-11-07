@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KeepKit v0.2.6 发布验证</title>
+<style>
+body{font:16px/1.7 system-ui,sans-serif;max-width:900px;margin:2.5rem auto;padding:0 1rem;color:#172738}
+table{width:100%;border-collapse:collapse}td,th{padding:.65rem;border:1px solid #d7e0ea;text-align:left;vertical-align:top}
+th{background:#eef4fa}code{overflow-wrap:anywhere}a{color:#205eaa}
+</style>
+</head>
+<body>
+<h1>KeepKit v0.2.6 发布验证</h1>
+<p>2026-11-07 · JitPack 发布坐标 <code>com.github.zerofancy:ComposeDesktopKeepKit:v0.2.6</code></p>
+<table>
+<thead><tr><th>检查</th><th>结果</th></tr></thead>
+<tbody>
+<tr><td>发布提交</td><td>标签 <code>v0.2.6</code> 指向 <code>a888485abfd0a7bb618e711d0804a8c642faf7b1</code>。</td></tr>
+<tr><td>三平台 CI</td><td>Linux、Windows 和 macOS 的核心检查和全部依赖矩阵通过，整次运行 23/23 项成功。<a href="https://github.com/zerofancy/ComposeDesktopKeepKit/actions/runs/42358289023">CI 运行</a></td></tr>
+<tr><td>JitPack 产物</td><td>状态为 <code>ok</code>，提交与发布标签一致。POM、实现 JAR 和 sources JAR 均可下载。实现 JAR 的版本、插件描述符、规则目录及所有规则文件与标签源码核对一致。</td></tr>
+<tr><td>远端消费</td><td>从 JitPack 解析插件的样例两次通过 <code>runRelease keepKitReport --configuration-cache</code>，成功加载 PNG 和 SVG。第二次复用了配置缓存。Gradle 缓存内的插件 JAR 与直接下载产物 SHA-256 一致。</td></tr>
+<tr><td>实现 JAR SHA-256</td><td><code>5b985cde75a9c0790d5a3eadce524b4f9ff8bdf7cc208594d43159db7ad07efc</code></td></tr>
+<tr><td>sources JAR SHA-256</td><td><code>4a5ac70445caeea0971e07a91ba4b6050feb0f3392a276498ef34e33c61dfd48</code></td></tr>
+</tbody>
+</table>
+<p>MCP、BossTerm 和 KZAgent 的验证范围见 <a href="kzagent-release-rules-validation.html">Release 规则验证记录</a>。KZAgent 的应用侧 Windows PTY 与 macOS 目录选择器交互需要在其自身产物上补验。</p>
+<p><a href="https://github.com/zerofancy/ComposeDesktopKeepKit/tree/v0.2.6">发布标签</a> · <a href="https://jitpack.io/#zerofancy/ComposeDesktopKeepKit/v0.2.6">JitPack 发布页</a></p>
+</body>
+</html>
